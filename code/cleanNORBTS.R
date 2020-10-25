@@ -412,13 +412,13 @@ norw_dat <- norw_dat %>%
 
 norw_dat <- norw_dat %>%
   select(Survey, HaulID, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST, Species, numcpue, 
-         wtcpue, numh, wgth, Length, numlencpue, wtlencpue, numlenh, wgtlenh)
+         wtcpue, numh, wgth, Length, numlencpue, numlenh)
 
 rm(df_test, keep_sp, my_sp_taxo, norw_dat0, sp_list, sp_list_change, sp_list_ok, sp.pb, check.ab, check.sp, check.sub.ab)
 rm(check.sub.w, check.sum, clean.names, sum.na, sum.pos, times)
 rm(i, aphia_list, kk, kkk, Max, Min, y, cleanspl, kkkk)
 
-save(norw_dat, file='data/norBTS.25.10.2020.RData')
+save(norw_dat, file='~/FISHGLOB/CleanTrawlNAmEUr/data/NORBTS.25.10.2020.RData')
 
 
 ##########################################################################################
