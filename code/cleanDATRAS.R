@@ -71,10 +71,8 @@ hl.scowcgfs <- getDATRAS(record='HL', survey='SCOWCGFS', years=c(2011:last.year)
 hl <- rbind(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.scorock,
             hl.swc, hl.scowcgfs)
 
-rm(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.scorock, hl.spa, 
-   hl.spn, hl.spn2, hl.spp, hl.sns, hl.swc, hl.scowcgfs, hl.bts, hl.bts8, hl.dyfs, 
-   hh.ns, hh.baltic, hh.evhoe, hh.cgfs, hh.igfs, hh.nigfs, hh.pt, hh.rock, hh.scorock, hh.spa, 
-   hh.spn, hh.spp, hh.sns, hh.swc, hh.scowcgfs, hh.bts, hh.bts8, hh.dyfs)
+rm(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.scorock, hl.swc, hl.scowcgfs, 
+   hh.ns, hh.baltic, hh.evhoe, hh.cgfs, hh.igfs, hh.nigfs, hh.pt, hh.rock, hh.scorock, hh.swc, hh.scowcgfs)
 
 
 ##########################################################################################
@@ -440,7 +438,7 @@ survey <- survey %>%
          Depth = replace(Depth, Depth<0, NA),
          SBT = replace(SBT, SBT<0, NA),
          SST = replace(SST, SST<0, NA)) %>%
-  rename(Length = LngtClass)
+  dplyr::rename(Length = LngtClass) %>% 
   group_by(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST, AphiaID, BycSpecRecCode, Length) %>%
   summarize_at(.vars=c('numcpue', 'wtcpue', 'numh', 'wgth', 'num', 'wgt', 'numlencpue','numlenh'), .funs=function(x) sum(x, na.rm=T)) %>%
   select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST,
@@ -545,4 +543,6 @@ survey <- survey %>%
 ##########################################################################################
 #### SAVE DATA
 ##########################################################################################
-save(survey, file='data/ICESsurveys25102020.RData')
+survey <- survey %>% 
+  select(-BycSpecRecCode, -num, -wgt)
+save(survey, file='data/ICESsurveys26102020.RData')

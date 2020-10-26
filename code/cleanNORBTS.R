@@ -350,7 +350,7 @@ sp_list$aphiaID <- as.character(sp_list$aphiaID)
 #setwd('C:/Users/auma/Documents/PhD DTU Aqua/(iv) Clean surveys/2. Clean taxonomy')
 #write.csv(sp_list, file='sp_list_europe_2004_2017.csv', row.names=FALSE)
 
-clean.names <- read.csv('C:/Users/auma/Documents/PhD DTU Aqua/(iv) Clean surveys/2. Clean taxonomy/check.species.old.names.WORMS.csv')
+clean.names <- read.csv('data/check.species.old.names.WORMS.csv')
 clean.names$aphiaID <- NULL
 setnames(sp_list, old='species.cleaned', new='ScientificName')
 # species = to match back with dataset
@@ -411,14 +411,21 @@ norw_dat <- norw_dat %>%
   mutate(Species = ScientificName)
 
 norw_dat <- norw_dat %>%
-  select(Survey, HaulID, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST, Species, numcpue, 
+  mutate(StatRec=NA) %>% 
+  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST, Species, numcpue, 
          wtcpue, numh, wgth, Length, numlencpue, numlenh)
 
 rm(df_test, keep_sp, my_sp_taxo, norw_dat0, sp_list, sp_list_change, sp_list_ok, sp.pb, check.ab, check.sp, check.sub.ab)
 rm(check.sub.w, check.sum, clean.names, sum.na, sum.pos, times)
 rm(i, aphia_list, kk, kkk, Max, Min, y, cleanspl, kkkk)
 
-save(norw_dat, file='~/FISHGLOB/CleanTrawlNAmEUr/data/NORBTS.25.10.2020.RData')
+
+norw_dat <- norw_dat %>% 
+  mutate(StatRec=NA) %>% 
+  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear,
+         Depth, SBT, SST, Species, numcpue, wtcpue, numh, wgth, Length, numlencpue, numlenh)
+
+save(norw_dat, file='~/FISHGLOB/CleanTrawlNAmEUr/data/NORBTS26102020.RData')
 
 
 ##########################################################################################
