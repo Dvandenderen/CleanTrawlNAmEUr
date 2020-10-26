@@ -18,7 +18,6 @@ library(crul)
 library(urltools)
 
 
-
 ##########################################################################################
 #### LOAD FILES
 ##########################################################################################
@@ -101,10 +100,10 @@ hh$HydroStNo <- hh$HaulLat <- hh$SweepLngt <- hh$HaulLong <- hh$DayNight <- hh$S
 hh <- subset(hh, hh$HaulID %in% hl$HaulID)
 hl <- subset(hl, hl$HaulID %in% hh$HaulID)
 
-#if(identical(sort(unique(hh$HaulID)),sort(unique(hl$HaulID)))){
-#  save(hh, file='data/HH.23.10.2020.RData')
-#  save(hl, file='data/HL.23.10.2020.RData')
-#}
+if(identical(sort(unique(hh$HaulID)),sort(unique(hl$HaulID)))){
+ save(hh, file='data/HH.26.10.2020.RData')
+ save(hl, file='data/HL.26.10.2020.RData')
+}
 #load('data/HH.23.10.2020.RData')
 #load('data/HL.23.10.2020.RData')
 
@@ -492,30 +491,30 @@ survey$AphiaID <- NULL
 ### Code to integrate from Anna on species bycatch corrections
 survey <- data.frame(survey)
 survey <- survey %>%
-  mutate(Species = recode(Species, 'Synaphobranchus kaupii'='Synaphobranchus kaupi',
-                          'Dipturus batis'='Dipturus spp','Dipturus flossada'='Dipturus spp',
-                          'Dipturus batis-complex'='Dipturus spp','Dipturus intermedia'='Dipturus spp',
-                          'Dipturus'='Dipturus spp','Liparis montagui'='Liparis spp',
-                          'Liparis liparis'='Liparis spp','Liparis liparis liparis'='Liparis spp',
-                          'Chelon aurata'='Chelon spp','Chelon ramada'='Chelon spp',
-                          'Mustelus mustelus/asterias'='Mustelus spp','Mustelus'='Mustelus spp',
-                          'Mustelus mustelus'='Mustelus spp','Mustelus asterias'='Mustelus spp',
-                          'Alosa'='Alosa spp','Alosa alosa'='Alosa spp','Alosa fallax'='Alosa spp',
-                          'Argentina'='Argentina spp','Argentinidae'='Argentina spp',
-                          'Argentina silus'='Argentina spp','Argentina sphyraena'='Argentina spp',
-                          'Callionymus reticulatus'='Callionymus spp','Callionymus maculatus'='Callionymus spp',
-                          'Ciliata mustela'='Ciliata spp','Ciliata septentrionalis'='Ciliata spp',
-                          'Gaidropsarus'='Gaidropsarus spp','Gaidropsaurus macrophthalmus'='Gaidropsarus spp',
-                          'Gaidropsaurus mediterraneus'='Gaidropsarus spp','Gaidropsaurus vulgaris'='Gaidropsarus spp',
-                          'Sebastes'='Sebastes spp','Sebastes norvegicus'='Sebastes spp','Sebastes mentella'='Sebastes spp',
-                          'Sebastes marinus'='Sebastes spp','Syngnathus'='Syngnatus spp',
-                          'Syngnathus rostellatus'='Syngnatus spp','Syngnathus acus'='Syngnatus spp',
-                          'Syngnathus typhle'='Syngnatus spp','Nerophis ophidion'='Syngnatus spp',
-                          'Pomatoschistus'='Pomatoschistus spp','Pomatoschistus microps'='Pomatoschistus spp',
-                          'Pomatoschistus minutus'='Pomatoschistus spp','Pomatoschistus pictus'='Pomatoschistus spp',
-                          'Lesueurigobius'='Gobius spp','Gobius cobitis'='Gobius spp','Gobius niger'='Gobius spp',
-                          'Leusueurigobius friesii'='Gobius spp','Neogobius melanostomus'='Gobius spp',
-                          'Neogobius'='Gobius spp')) %>% 
+  mutate(Species = recode(Species,'Synaphobranchus kaupii'='Synaphobranchus kaupi',
+                          'Dipturus batis'='Dipturus','Dipturus flossada'='Dipturus',
+                          'Dipturus batis-complex'='Dipturus','Dipturus intermedia'='Dipturus',
+                          'Dipturus'='Dipturus','Liparis montagui'='Liparis',
+                          'Liparis liparis'='Liparis','Liparis liparis liparis'='Liparis',
+                          'Chelon aurata'='Chelon','Chelon ramada'='Chelon',
+                          'Mustelus mustelus/asterias'='Mustelus','Mustelus'='Mustelus',
+                          'Mustelus mustelus'='Mustelus','Mustelus asterias'='Mustelus',
+                          'Alosa'='Alosa','Alosa alosa'='Alosa','Alosa fallax'='Alosa',
+                          'Argentina'='Argentina','Argentinidae'='Argentina',
+                          'Argentina silus'='Argentina','Argentina sphyraena'='Argentina',
+                          'Callionymus reticulatus'='Callionymus','Callionymus maculatus'='Callionymus',
+                          'Ciliata mustela'='Ciliata','Ciliata septentrionalis'='Ciliata',
+                          'Gaidropsarus'='Gaidropsarus','Gaidropsaurus macrophthalmus'='Gaidropsarus',
+                          'Gaidropsaurus mediterraneus'='Gaidropsarus','Gaidropsaurus vulgaris'='Gaidropsarus',
+                          'Sebastes'='Sebastes','Sebastes norvegicus'='Sebastes','Sebastes mentella'='Sebastes',
+                          'Sebastes marinus'='Sebastes','Syngnathus'='Syngnatus',
+                          'Syngnathus rostellatus'='Syngnatus','Syngnathus acus'='Syngnatus',
+                          'Syngnathus typhle'='Syngnatus','Nerophis ophidion'='Syngnatus',
+                          'Pomatoschistus'='Pomatoschistus','Pomatoschistus microps'='Pomatoschistus',
+                          'Pomatoschistus minutus'='Pomatoschistus','Pomatoschistus pictus'='Pomatoschistus',
+                          'Lesueurigobius'='Gobius','Gobius cobitis'='Gobius','Gobius niger'='Gobius',
+                          'Leusueurigobius friesii'='Gobius','Neogobius melanostomus'='Gobius',
+                          'Neogobius'='Gobius')) %>% 
   filter(!(BycSpecRecCode==0 & Survey=='NS-IBTS' & !Species %in% c('Clupea harengus','Sprattus sprattus','Scomber scombrus','Gadus morhua',
                                                                    'Melanogrammus aeglefinus','Merlangius merlangus','Trisopterus esmarkii')),
          !(BycSpecRecCode==2 & !Species %in% c('Ammodytidae','Anarhichas lupus','Argentina silus','Argentina sphyraena',

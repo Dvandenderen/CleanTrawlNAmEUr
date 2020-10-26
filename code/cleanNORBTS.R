@@ -390,9 +390,6 @@ df_test$authority <- df_test$status <- df_test$taxonRankID <- df_test$isBrackish
 # In the class column, we only keep the 5 class we want, corresponding to fish species
 df_test <- subset(df_test, class %in% c("Elasmobranchii","Actinopterygii","Holocephali","Myxini","Petromyzonti")) 
 
-# Only keep species rank
-df_test <- subset(df_test, df_test$rank=='Species')
-
 # List of names to keep
 keep_sp <- data.frame(df_test) # subsetting
 keep_sp <- data.frame(unlist(keep_sp$scientificname)) #unlisting
@@ -432,30 +429,22 @@ save(norw_dat, file='~/FISHGLOB/CleanTrawlNAmEUr/data/NORBTS26102020.RData')
 #### CHECKING SPATIAL DISTRIBUTION OF DATA POINTS
 ##########################################################################################
 
-require(ggplot2)
-
-coords <- norw_dat %>%
-  filter(Month %in% c(8,9)) %>% 
-  select(ShootLat, ShootLong, Survey) %>%
-  distinct()
-
-ggplot(coords,aes(ShootLong,ShootLat))+
-  #borders(xlim=c(-120,-110),ylim=c(40,41),fill="azure3",colour = "black") +
-  borders(xlim=c(-20,50),ylim=c(54,82),fill="lightgrey",colour = "lightgrey") +
-  coord_quickmap(xlim=c(-20,50),ylim=c(54,82))+theme_bw()+
-  geom_point(cex = 1, col='navyblue')
-
-coordY <- norw_dat %>%
-  filter(Month %in% c(8,9)) %>% 
-  select(HaulID, ShootLat, ShootLong, Survey, Year) %>%
-  distinct() %>% 
-  group_by(Year) %>% 
-  summarize(number = length(unique(HaulID)))
-
-# spp recorded during summer survey: august/september:
-spp.summer<- norw_dat %>%
-  filter(Month %in% c(8,9)) %>% 
-  select(Species) %>%
-  distinct()
-spp.summer <- sort(spp.summer)
-write.csv(spp.summer, file='spp.summer.csv')
+# require(ggplot2)
+# 
+# coords <- norw_dat %>%
+#   filter(Month %in% c(8,9)) %>% 
+#   select(ShootLat, ShootLong, Survey) %>%
+#   distinct()
+# 
+# ggplot(coords,aes(ShootLong,ShootLat))+
+#   #borders(xlim=c(-120,-110),ylim=c(40,41),fill="azure3",colour = "black") +
+#   borders(xlim=c(-20,50),ylim=c(54,82),fill="lightgrey",colour = "lightgrey") +
+#   coord_quickmap(xlim=c(-20,50),ylim=c(54,82))+theme_bw()+
+#   geom_point(cex = 1, col='navyblue')
+# 
+# coordY <- norw_dat %>%
+#   filter(Month %in% c(8,9)) %>% 
+#   select(HaulID, ShootLat, ShootLong, Survey, Year) %>%
+#   distinct() %>% 
+#   group_by(Year) %>% 
+#   summarize(number = length(unique(HaulID)))
