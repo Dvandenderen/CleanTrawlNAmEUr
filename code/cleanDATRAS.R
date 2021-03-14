@@ -1,6 +1,6 @@
 #############################################################
 #### Code to download and clean survey data from DATRAS
-#### Coding: Aurore Maureaud, October 2020
+#### Coding: Aurore Maureaud, March 2021
 #############################################################
 Sys.setenv(LANG = "en")
 rm(list=ls())
@@ -33,13 +33,8 @@ hh.nigfs <- getDATRAS(record='HH', survey='NIGFS', years=c(2005:last.year), quar
 hh.pt <- getDATRAS(record='HH', survey='PT-IBTS', years=c(2002:last.year), quarters=c(3:4))
 hh.rock <- getDATRAS(record='HH', survey='ROCKALL', years=c(1999:2009), quarters=3)
 hh.scorock <- getDATRAS(record='HH', survey='SCOROC', years=c(2011:last.year), quarters=3)
-#hh.spa <- getDATRAS(record='HH', survey='SP-ARSA', years=c(1996:last.year), quarters=c(1:4))
-#hh.spn <- getDATRAS(record='HH', survey='SP-NORTH', years=c(1990:last.year), quarters=c(3:4))
-#hh.spp <- getDATRAS(record='HH', survey='SP-PORC', years=c(2001:last.year), quarters=c(3:4))
-#hh.sns <- getDATRAS(record='HH', survey='SNS', years=c(2002:last.year), quarters=c(3:4))
 hh.swc <- getDATRAS(record='HH', survey='SWC-IBTS', years=c(1985:2010), quarters=c(1:4))
 hh.scowcgfs <- getDATRAS(record='HH', survey='SCOWCGFS', years=c(2011:last.year), quarters=c(1:4))
-#hh.dyfs <- getDATRAS(record='HH', survey='DYFS', years=c(2002:last.year), quarters=c(3,4))
 
 hh <- rbind(hh.ns, hh.baltic, hh.evhoe, hh.cgfs, hh.igfs, hh.nigfs, hh.pt, hh.rock, hh.scorock, 
             hh.swc, hh.scowcgfs)
@@ -54,18 +49,8 @@ hl.nigfs <- getDATRAS(record='HL', survey='NIGFS', years=c(2005:last.year), quar
 hl.pt <- getDATRAS(record='HL', survey='PT-IBTS', years=c(2002:last.year), quarters=c(3:4))
 hl.rock <- getDATRAS(record='HL', survey='ROCKALL', years=c(1999:2009), quarters=3)
 hl.scorock <- getDATRAS(record='HL', survey='SCOROC', years=c(2011:last.year), quarters=3)
-#hl.spa <- getDATRAS(record='HL', survey='SP-ARSA', years=c(1996:last.year), quarters=c(1:4))
-#hl.spn <- getDATRAS(record='HL', survey='SP-NORTH', years=c(1990:2012), quarters=c(3:4))
-#hl.spn2 <- getDATRAS(record='HL', survey='SP-NORTH', years=c(2014:last.year), quarters=c(3:4))
-# there is a problem with SPNorth for year 2013, so did not load the data for that year
-#hl.spn <- rbind(hl.spn, hl.spn2)
-#hl.spp <- getDATRAS(record='HL', survey='SP-PORC', years=c(2001:last.year), quarters=c(3:4))
-#hl.sns <- getDATRAS(record='HL', survey='SNS', years=c(2002:last.year), quarters=c(3:4))
 hl.swc <- getDATRAS(record='HL', survey='SWC-IBTS', years=c(1985:2010), quarters=c(1:4))
 hl.scowcgfs <- getDATRAS(record='HL', survey='SCOWCGFS', years=c(2011:last.year), quarters=c(1:4))
-#hl.bts <- getDATRAS(record='HL', survey='BTS', years=c(1985:last.year), quarters=c(1:4))
-#hl.bts8 <- getDATRAS(record='HL', survey='BTS-VIII', years=c(2011:last.year), quarters=4)
-#hl.dyfs <- getDATRAS(record='HL', survey='DYFS', years=c(2002:last.year), quarters=c(3,4))
 
 hl <- rbind(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.scorock,
             hl.swc, hl.scowcgfs)
@@ -85,27 +70,30 @@ hh$HaulID <- paste(hh$Survey, hh$Year,hh$Quarter, hh$Country, hh$Ship, hh$Gear, 
 hhn <- unique(hh$HaulID)
 length(hhn)==nrow(hh)
 
-#pb <- c()
-#for (i in 1:length(hhn)){
+# pb <- c()
+# for (i in 1:length(hhn)){
 #  j <- which(hh$HaulID==hhn[i])
 #  if(length(j)>1){pb <- hhn[i]}
-#}
+# }
 
 hh$DateofCalculation <- hh$ThClineDepth <- hh$ThermoCline <- hh$SwellHeight <- hh$SwellDir <- hh$WindSpeed <- hh$WindDir <- hh$BotCurSpeed <- NULL
 hh$BotCurDir <- hh$SurCurSpeed <- hh$SurCurDir <- hh$SpeedWater <- hh$TowDir <- hh$WgtGroundRope <- hh$KiteDim <- hh$Buoyancy <- NULL
 hh$DoorWgt <- hh$DoorSurface <- hh$WarpDen <- hh$Warpdia <- hh$Warplngt <- hh$Tickler <- hh$Rigging <- hh$Netopening <- NULL
 hh$HydroStNo <- hh$HaulLat <- hh$SweepLngt <- hh$HaulLong <- hh$DayNight <- hh$Stratum <- hh$TimeShot <- hh$Day <- hh$RecordType <- hh$GearExp <- hh$DoorType <- NULL
 
+hh <- hh %>% filter(HaulID!="NS-IBTS 1995 1 NA AA36 GOV 999 999") # remove the non-unique HaulID in hh and hl
+hl <- hl %>% filter(HaulID!="NS-IBTS 1995 1 NA AA36 GOV 999 999")
+
 # Only keep hauls where there is the length composition. 60162 hauls in hh and 60135 in hl
 hh <- subset(hh, hh$HaulID %in% hl$HaulID)
 hl <- subset(hl, hl$HaulID %in% hh$HaulID)
 
 if(identical(sort(unique(hh$HaulID)),sort(unique(hl$HaulID)))){
- save(hh, file='data/HH.26.10.2020.RData')
- save(hl, file='data/HL.26.10.2020.RData')
+ save(hh, file='data/HH.28.02.2021.RData')
+ save(hl, file='data/HL.28.02.2021.RData')
 }
-#load('data/HH.23.10.2020.RData')
-#load('data/HL.23.10.2020.RData')
+#load('data/HH.28.02.2021.RData')
+#load('data/HL.28.02.2021.RData')
 
 
 ##########################################################################################
@@ -153,13 +141,18 @@ survey <- survey %>%
 # If Data Type=='C', abundance at length already readjusted with time so get back the abundance for the actual duration of the haul.
 # If data type=='R', abundance at length is mulitplied by subfactor and adjusted to time
 survey <- survey %>% 
-  mutate(HLNoAtLngt = if_else(DataType=='C', HLNoAtLngt*SubFactor*HaulDur/60, HLNoAtLngt),
-         TotalNo = if_else(DataType=='C', TotalNo*HaulDur/60, TotalNo),
-         #CatCatchWgt = if_else(DataType=='C', CatCatchWgt*HaulDur/60, CatCatchWgt),
-         HLNoAtLngt = if_else(DataType %in% c('S','R'),HLNoAtLngt*SubFactor,HLNoAtLngt)) %>% 
-  select(-HaulVal, -DataType, -StdSpecRecCode, -SpecVal, -CatIdentifier, -SubWgt, -SubFactor) %>% 
+  mutate(HLNoAtLngt = case_when(DataType=='C' ~ HLNoAtLngt*SubFactor*HaulDur/60,
+                                DataType %in% c('S','R') ~ HLNoAtLngt*SubFactor),
+         TotalNo = case_when(DataType=='C' ~ TotalNo*HaulDur/60, 
+                             DataType %in% c('S','R') ~ TotalNo),
+         CatCatchWgt = as.numeric(CatCatchWgt),
+         CatCatchWgt = case_when(DataType=='C' ~ CatCatchWgt*HaulDur/60,
+                                 DataType %in% c('S','R') ~ CatCatchWgt)) %>% 
+  select(-HaulVal, -DataType, -StdSpecRecCode, -SpecVal, -SubWgt, -SubFactor) %>% 
   mutate(Survey = if_else(Survey=='SCOWCGFS', 'SWC-IBTS', Survey)) %>% 
-  mutate(Survey = if_else(Survey=='SCOROC','ROCKALL',Survey))
+  mutate(Survey = if_else(Survey=='SCOROC','ROCKALL',Survey)) %>% 
+  filter(!(Survey=="NS-IBTS" & BycSpecRecCode %in% c(0,2,3,4,5)), # remove hauls where not all species are recorded
+         !(Survey=="BITS" & BycSpecRecCode==0))
 
 
 ##########################################################################################
@@ -203,7 +196,7 @@ area2 <- evhoe
 ### North Sea ###
 nsibts <- survey %>%
   filter(Survey=='NS-IBTS',
-         Year>1989,
+         #Year>1989,
          !is.na(Depth)) %>%
   select(Year, HaulID, HaulDur, Area.swept, Depth, Ship, Gear, GearExp, DoorType, Speed, Distance) %>%
   distinct()
@@ -228,8 +221,7 @@ area2 <- rbind(nsibts, area2)
 
 ### SWC-IBTS ###
 swc <- survey %>%
-  filter(Survey=='SWC-IBTS',
-         Year>1989) %>%
+  filter(Survey=='SWC-IBTS') %>%
   select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, Speed, Distance) %>%
   distinct()
 
@@ -249,8 +241,7 @@ area2 <- rbind(area2, swc)
 
 ### BITS ###
 bits <- survey %>%
-  filter(Survey=='BITS',
-         Year>1989) %>%
+  filter(Survey=='BITS') %>%
   select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID) %>%
   distinct()
 
@@ -290,8 +281,7 @@ area2 <- rbind(area2, ie)
 
 # FR-CGFS very few hauls with swept area data
 cgfs <- survey %>%
-  filter(Survey=='FR-CGFS',
-         Year>1989) %>%
+  filter(Survey=='FR-CGFS') %>%
   select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, Speed, Distance) %>%
   distinct()
 
@@ -313,8 +303,7 @@ area2 <- rbind(area2, cgfs)
 
 ### NIGFS ###
 nigfs <- survey %>%
-  filter(Survey=='NIGFS',
-         Year>1989) %>%
+  filter(Survey=='NIGFS') %>%
   mutate(DurQ = ifelse(HaulDur<40,'S','L')) %>%
   select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, DurQ, Speed, Distance) %>%
   distinct()
@@ -361,8 +350,7 @@ area2 <- rbind(area2, nigfs)
 
 ### ROCKALL ###
 rock <- survey %>%
-  filter(Survey=='ROCKALL',
-         Year>1989) %>%
+  filter(Survey=='ROCKALL') %>%
   select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, Speed, Distance) %>%
   distinct()
 
@@ -387,8 +375,7 @@ area2 <- rbind(area2, rock)
 pt <- survey %>%
   filter(!is.na(HaulDur),
          !is.na(Depth),
-         !is.na(Speed),
-         Year>1989)%>%
+         !is.na(Speed))%>%
   select(Survey, Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, Speed, Distance) %>%
   distinct()
 
@@ -412,6 +399,7 @@ area2 <- rbind(area2, pt)
 rm(bits, cgfs, ie, nsibts, pt, nigfsL, nigfsS, nigfs, pred0, lm0, evhoe, swc, rock)
 
 # Paste new estimates to survey data frame
+area2 <- area2 %>% distinct()
 survey0 <- left_join(survey, area2, by='HaulID')
 survey0 <- survey0 %>%
   mutate(Area.swept = coalesce(Area.swept, Area2)) %>%
@@ -423,8 +411,14 @@ survey <- survey0
 ##########################################################################################
 #### GET CPUEs AND RIGHT COLUMNS NAMES
 ##########################################################################################
+
+# Remove data without length composition or negative values
+xx <- subset(survey, HLNoAtLngt<0 | is.na(LngtClass))
+no_length_hauls <- sort(unique(xx$HaulID))
+
 # Only keep abundances/weight
 survey <- survey %>%
+  filter(!(HaulID %in% no_length_hauls)) %>% # remove hauls without length data
   mutate(numcpue = TotalNo/Area.swept, # abundance/km2
          wtcpue = CatCatchWgt/(Area.swept*1000), #weight in kg/km2
          numh = (TotalNo*60)/HaulDur, # abundance/hour
@@ -436,12 +430,13 @@ survey <- survey %>%
          Season = 'NA',
          Depth = replace(Depth, Depth<0, NA),
          SBT = replace(SBT, SBT<0, NA),
-         SST = replace(SST, SST<0, NA)) %>%
+         SST = replace(SST, SST<0, NA),
+         LngtClass = ifelse(LngtCode %in% c('.','0'), LngtClass*0.1, LngtClass)) %>% # fix unit of length class
   dplyr::rename(Length = LngtClass) %>% 
-  group_by(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST, AphiaID, BycSpecRecCode, Length) %>%
-  summarize_at(.vars=c('numcpue', 'wtcpue', 'numh', 'wgth', 'num', 'wgt', 'numlencpue','numlenh'), .funs=function(x) sum(x, na.rm=T)) %>%
+  # group_by(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST, AphiaID, Length) %>%
+  # summarize_at(.vars=c('numcpue', 'wtcpue', 'numh', 'wgth', 'num', 'wgt', 'numlencpue','numlenh'), .funs=function(x) sum(x, na.rm=T)) %>%
   select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST,
-         AphiaID, BycSpecRecCode, numcpue, wtcpue, numh, wgth, num, wgt, Length, numlencpue, numlenh)
+         AphiaID, CatIdentifier, numcpue, wtcpue, numh, wgth, num, wgt, Length, numlencpue, numlenh)
 survey <- data.frame(survey)
 
 
@@ -474,7 +469,13 @@ names(keep_sp) <- 'ScientificName'
 keep_ap <- data.frame(df_test) # subsetting
 keep_ap <- data.frame(unlist(keep_ap$AphiaID))
 names(keep_ap) <- 'AphiaID'
-keep <- cbind(keep_ap, keep_sp)
+keep_gen <- data.frame(df_test) # subsetting
+keep_gen <- data.frame(unlist(keep_gen$genus))
+names(keep_gen) <- 'Genus'
+keep_fa <- data.frame(df_test) # subsetting
+keep_fa <- data.frame(unlist(keep_fa$family))
+names(keep_fa) <- 'Family'
+keep <- cbind(keep_ap, keep_sp, keep_gen, keep_fa)
 
 dat.ices <- subset(dat.ices, dat.ices$AphiaID %in% keep_ap$AphiaID)
 dat.ices <- left_join(dat.ices, keep, by='AphiaID')
@@ -484,15 +485,14 @@ survey <- dat.ices
 
 survey <- survey %>%
   select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, 
-         Gear, Depth, SBT, SST, Species, BycSpecRecCode, numcpue, wtcpue, numh, wgth, num, wgt, Length, numlencpue, numlenh)
+         Gear, Depth, SBT, SST, Family, Genus, Species, CatIdentifier, numcpue, wtcpue, numh, wgth, num, wgt, Length, numlencpue, numlenh)
 survey$AphiaID <- NULL
 
 
-### Code to integrate from Anna on species bycatch corrections
+### Code to integrate from Anna Rindorf on species bycatch corrections
 survey <- data.frame(survey)
 survey <- survey %>%
-  mutate(Species = recode(Species,'Synaphobranchus kaupii'='Synaphobranchus kaupi',
-                          'Dipturus batis'='Dipturus','Dipturus flossada'='Dipturus',
+  mutate(Species = recode(Species,'Dipturus batis'='Dipturus','Dipturus flossada'='Dipturus',
                           'Dipturus batis-complex'='Dipturus','Dipturus intermedia'='Dipturus',
                           'Dipturus'='Dipturus','Liparis montagui'='Liparis',
                           'Liparis liparis'='Liparis','Liparis liparis liparis'='Liparis',
@@ -514,34 +514,193 @@ survey <- survey %>%
                           'Pomatoschistus minutus'='Pomatoschistus','Pomatoschistus pictus'='Pomatoschistus',
                           'Lesueurigobius'='Gobius','Gobius cobitis'='Gobius','Gobius niger'='Gobius',
                           'Leusueurigobius friesii'='Gobius','Neogobius melanostomus'='Gobius',
-                          'Neogobius'='Gobius')) %>% 
-  filter(!(BycSpecRecCode==0 & Survey=='NS-IBTS' & !Species %in% c('Clupea harengus','Sprattus sprattus','Scomber scombrus','Gadus morhua',
-                                                                   'Melanogrammus aeglefinus','Merlangius merlangus','Trisopterus esmarkii')),
-         !(BycSpecRecCode==2 & !Species %in% c('Ammodytidae','Anarhichas lupus','Argentina silus','Argentina sphyraena',
-                                               'Chelidonichthys cuculus','Callionymus lyra','Eutrigla gurnardus','Lumpenus lampretaeformis',
-                                               'Mullus surmuletus','Squalus acanthias','Trachurus trachurus',
-                                               'Platichthys flesus','Pleuronectes platessa','Limanda limanda','Lepidorhombus whiffiagoni','Hippoglossus hippoglossus','Hippoglossoides platessoi',
-                                               'Glyptocephalus cynoglossu','Microstomus kitt','Scophthalmus maximus','Scophthalmus rhombus','Solea solea',
-                                               'Pollachius virens','Pollachius pollachius','Trisopterus luscus','Trisopterus minutus','Micromesistius poutassou','Molva molva',
-                                               'Merluccius merluccius','Brosme brosme','Clupea harengus','Sprattus sprattus','Scomber scombrus','Gadus morhua','Melanogrammus aeglefinus',
-                                               'Merlangius merlangus','Trisopterus esmarkii')),
-         !(BycSpecRecCode==3 & !Species %in% c('Pollachius virens','Pollachius pollachius','Trisopterus luscus','Trisopterus minutus','Micromesistius poutassou','Molva molva',
-                                               'Merluccius merluccius','Brosme brosme','Clupea harengus','Sprattus sprattus',
-                                               'Scomber scombrus','Gadus morhua','Melanogrammus aeglefinus','Merlangius merlangus','Trisopterus esmarkii')),
-         !(BycSpecRecCode==4 & !Species %in% c('Platichthys flesus','Pleuronectes platessa','Limanda limanda','Lepidorhombus whiffiagoni','Hippoglossus hippoglossus','Hippoglossoides platessoi',
-                                               'Glyptocephalus cynoglossu','Microstomus kitt','Scophthalmus maximus','Scophthalmus rhombus','Solea solea',
-                                               'Clupea harengus','Sprattus sprattus','Scomber scombrus','Gadus morhua','Melanogrammus aeglefinus',
-                                               'Merlangius merlangus','Trisopterus esmarkii')),
-         !(BycSpecRecCode==5 & !Species %in% c('Ammodytidae','Anarhichas lupus','Argentina silus','Argentina sphyraena',
-                                               'Chelidonichthys cuculus','Callionymus lyra','Eutrigla gurnardus','Lumpenus lampretaeformis',
-                                               'Mullus surmuletus','Squalus acanthias','Trachurus trachurus','Clupea harengus',
-                                               'Sprattus sprattus','Scomber scombrus','Gadus morhua','Melanogrammus aeglefinus',
-                                               'Merlangius merlangus','Trisopterus esmarkii')))
+                          'Neogobius'='Gobius'))
+
+
+##########################################################################################
+#### RE-CALCULATE WEIGHTS
+##########################################################################################
+detach(package:worms)
+detach(package:plyr)
+
+# select only certain gears
+# 1. summary of gears per survey
+gears <- data.frame(survey) %>% 
+  group_by(Survey, Gear) %>% 
+  summarise(hauls = length(unique(HaulID)), years = length(unique(Year))) %>% 
+  select(Survey, Gear, hauls, years)
+
+# 2. only select certain gears per survey
+survey <- survey %>% 
+  filter(!(Survey=="NS-IBTS" & Gear %in% c('ABD', 'BOT', 'DHT', 'FOT', 'GRT', 'H18', 'HOB', 'HT', 'KAB', 'VIN')),
+         !(Survey=="BITS" & Gear %in% c('CAM', 'CHP', 'DT', 'EGY', 'ESB', 'EXP', 'FOT', 'GRT', 'H20', 'HAK', 'LBT','SON')),
+         !(Survey=="PT-IBTS" & Gear=='CAR'))
+
+
+# 3. associate an LME to each haul and make final list of species
+### Prepare list for estimating length-weight parameters
+list.taxa <- survey %>% 
+  select(HaulID, Survey, ShootLat, ShootLong, Family, Genus, Species) %>% 
+  distinct()
+
+# get LME
+library(rgdal)
+shape1 <- readOGR(dsn = "D:/DATA/Geography",layer="LMEs66")
+coords <- list.taxa %>%
+  dplyr::select(ShootLat, ShootLong, Survey) %>%
+  distinct()
+str(coords)
+
+coordinates(coords) <- ~ ShootLong + ShootLat
+proj4string(coords) <- proj4string(shape1)
+lme <- over(coords, shape1)
+
+coords <- list.taxa %>%
+  dplyr::select(ShootLat, ShootLong, Survey) %>%
+  distinct()
+coords <- cbind(coords, lme$LME_NUMBER)
+setnames(coords, old='lme$LME_NUMBER', new='lme')
+
+# plot
+# ggplot(coords,aes(ShootLong,ShootLat))+
+#   borders('world', xlim=c(-90,50), ylim=c(25,85), fill='black', colour='black') +
+#   coord_quickmap(xlim=c(-90,50), ylim=c(25,85))+
+#   geom_polygon(data=shape1, aes(y=lat, x=long, group=group), fill='lightgrey', colour='black')+
+#   theme_bw()+xlab('')+ylab('')+
+#   geom_point(cex = 0.2, colour='blue')
+
+coords$lme <- as.factor(coords$lme)
+#Select from each LME 50 long and lat
+ind <- c()
+for (i in 1:nlevels(coords$lme)){
+  ind <- c(ind, sample(which(coords$lme==levels(coords$lme)[i]), 50, replace = FALSE))
+}
+long50 <- coords$ShootLong[ind]
+lat50 <- coords$ShootLat[ind]
+lme50 <- rep(levels(coords$lme), each=50)
+#For each haul without LME find a close LME that has an LME number already
+nlme <- subset(coords, is.na(lme)) # many hauls without LME 8151
+nlme$ShootLat <- as.numeric(as.vector(nlme$ShootLat))
+nlme$ShootLong <- as.numeric(as.vector(nlme$ShootLong))
+long50 <- as.numeric(as.vector(long50))
+lat50 <- as.numeric(as.vector(lat50))
+dilme <- c()
+for (i in 1:length(lme50)){
+  dilme <- cbind(dilme, (nlme$ShootLat-lat50[i])**2 + (nlme$ShootLong-long50[i])**2)
+}
+mindi <- apply(dilme, 1, which.min) 
+coords$lme[is.na(coords$lme)] <- lme50[mindi] # assign the closest LME number to each haul without LME
+
+
+#Check
+coords$ShootLat <- as.numeric(as.vector(coords$ShootLat))
+coords$ShootLong <- as.numeric(as.vector(coords$ShootLong))
+
+# rockall not assigned to Faroe plateau but to celtic sea LME
+coords <- coords %>%
+  mutate(lme = replace(lme, Survey=='ROCKALL', '24'))
+#plot(coords$ShootLong, coords$ShootLat, col=rainbow(length(unique(coords$lme)))[as.factor(coords$lme)], pch=".")
+
+survey <- left_join(survey, coords, by=c('ShootLat', 'ShootLong','Survey')) 
+survey <- survey %>% filter(Species!='Gobioidei')
+
+library(tidyverse)
+list.taxa <- survey %>% 
+  select(Family, Genus, Species, lme) %>% 
+  distinct() %>%
+  mutate(fao = 27,
+         Subspecies = str_split(Species, pattern = " ", simplify=T)[,3],
+         Species = str_split(Species, pattern = " ", simplify=T)[,2],
+         Species = if_else(Subspecies!="", paste(Species, Subspecies, sep=" "), Species))
+write.csv(data.frame(list.taxa), file="traits/taxa.DATRAS.FB.tofill4.csv", row.names=FALSE)
+save(survey, file = "data/DATRAS.before.lw.14MAR2021.RData")
+
+
+# 4. re-calculate weights with length-weight relationships
+load('data/DATRAS.before.lw.14MAR2021.RData')
+datalw <- read.csv('traits/taxa.DATRAS.FB_filled4.csv') %>% 
+  mutate(Taxon = case_when(level=='family' ~ family,
+                           level=='genus' ~ genus,
+                           level=='species' ~ paste(genus, species, sep=" ")),
+         lme = as.factor(lme)) %>% 
+  select(-fao,-family,-genus,-species)
+
+survey <- survey %>% 
+  mutate(Taxon = case_when(is.na(Species) & is.na(Genus) ~ Family,
+                           Species=="" & is.na(Genus) ~ Family,
+                           is.na(Species) & !is.na(Genus) ~ Genus,
+                           Species=="" & !is.na(Genus) ~ Genus,
+                           !is.na(Species) ~ Species))
+
+survey[survey$Species=='Syngnatus',]$Taxon <- 'Syngnathus'
+survey[survey$Species=='Syngnatus',]$Species <- 'Syngnathus'
+
+# summarize abundance/weight at the haul level
+survey.num <- left_join(survey, datalw, by=c('Taxon','lme')) %>% 
+  select(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon,
+         CatIdentifier,numcpue,numh,num) %>% 
+  distinct() %>% 
+  group_by(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon) %>%
+  summarize_at(.vars=c('numcpue', 'numh', 'num'), .funs = function(x) sum(x)) %>% 
+  ungroup()
+
+survey.wgt <- left_join(survey, datalw, by=c('Taxon','lme')) %>% 
+  select(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon,
+         CatIdentifier,wtcpue,wgth,wgt) %>% 
+  distinct() %>% 
+  group_by(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon) %>%
+  summarize_at(.vars=c('wtcpue', 'wgth', 'wgt'), .funs = function(x) sum(x)) %>% 
+  ungroup()
+
+survey1 <- full_join(survey.num, survey.wgt, 
+                     by=c('Survey','HaulID','StatRec','Year','Month','Quarter',
+                          'Season','ShootLat','ShootLong','HaulDur','Area.swept',
+                          'Gear','Depth','SBT','SST','Family','Genus','Species','Taxon'))
+
+# summarize abundance/weight from length data
+survey2 <- left_join(survey, datalw, by=c('Taxon','lme')) %>% 
+  mutate(wgtlencpue = numlencpue*a*Length^b/1000, # divide by 1000 to get kg/km2
+         wgtlenh = numlenh*a*Length^b/1000) %>% # divide by 1000 to get kg/h
+  group_by(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon, a, b) %>% 
+  summarize_at(.vars=c('numlencpue','numlenh','wgtlencpue','wgtlenh'), .funs=function(x) sum(x)) %>% 
+  ungroup()
+
+# merge both and compare
+nrow(survey1)==nrow(survey2)
+survey3 <- full_join(survey1, survey2, by=c('Survey','HaulID','StatRec','Year','Month','Quarter','Season','ShootLat','ShootLong','HaulDur',
+                                             'Area.swept','Gear','Depth','SBT','SST','Family','Genus','Species','Taxon'))
+
+library(ggplot2)
+
+# correlation between abundances to check calculations are right
+cor(x = survey3$numh, y = survey3$numlenh, method = 'pearson')
+xx <- subset(survey3, !is.na(numcpue))
+cor(x = xx$numcpue, y = xx$numlencpue, method = 'pearson')
+# only a scaling problem with EVHOE?
+
+xx <- subset(survey3, wgth>0 & wgtlenh>0)
+cor(x = xx$wgth, y = xx$wgtlenh, method = 'pearson')
+
+ggplot(survey3, aes(x=numh, y=numlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5)
+
+ggplot(subset(survey3, Survey=='SWC-IBTS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
+
+# survey3$ratio <- survey3$wgtlenh/survey3$wgth
+# for many hauls, the ratio between the calculated weight and the measured weight is very different
+# I looked at examples and sometimes the measured weights seems to be way lower than it should be
+# by comparing the size of the individuals and the weight an individual should be
+# since there is a 1 to 1 line between the two types of abundances
+# and the length-weight relationships seem to be right
+# there is a problem with the reported weight in surveys
 
 
 ##########################################################################################
 #### SAVE DATA
 ##########################################################################################
-survey <- survey %>% 
-  select(-BycSpecRecCode, -num, -wgt)
-save(survey, file='data/ICESsurveys26102020.RData')
+survey3 <- survey3 %>% 
+  select(-num, -wgt)
+save(survey3, file='data/ICESsurveys14MAR2021.RData')
