@@ -382,9 +382,10 @@ area2 <- rbind(area2, rock)
 ### PORTUGAL ###
 # no swept area information, use data from all other surveys
 pt <- survey %>%
-  filter(!is.na(HaulDur),
+   filter(!is.na(HaulDur),
          !is.na(Depth),
-         !is.na(Speed))%>%
+         !is.na(Speed),
+         Survey != 'Can-Mar') %>%
   select(Survey, Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, Speed, Distance) %>%
   distinct()
 
