@@ -35,9 +35,10 @@ hh.rock <- getDATRAS(record='HH', survey='ROCKALL', years=c(1999:2009), quarters
 hh.scorock <- getDATRAS(record='HH', survey='SCOROC', years=c(2011:last.year), quarters=3)
 hh.swc <- getDATRAS(record='HH', survey='SWC-IBTS', years=c(1985:2010), quarters=c(1:4))
 hh.scowcgfs <- getDATRAS(record='HH', survey='SCOWCGFS', years=c(2011:last.year), quarters=c(1:4))
+hh.canmar <- getDATRAS(record='HH', survey='Can-Mar', years=c(1970:last.year), quarters=c(1:4))
 
 hh <- rbind(hh.ns, hh.baltic, hh.evhoe, hh.cgfs, hh.igfs, hh.nigfs, hh.pt, hh.rock, hh.scorock, 
-            hh.swc, hh.scowcgfs)
+            hh.swc, hh.scowcgfs, hh.canmar)
 
 # Length info from DATRAS
 hl.ns <- getDATRAS(record='HL', survey='NS-IBTS', years=c(1967:last.year), quarters=c(1,3))
@@ -51,12 +52,13 @@ hl.rock <- getDATRAS(record='HL', survey='ROCKALL', years=c(1999:2009), quarters
 hl.scorock <- getDATRAS(record='HL', survey='SCOROC', years=c(2011:last.year), quarters=3)
 hl.swc <- getDATRAS(record='HL', survey='SWC-IBTS', years=c(1985:2010), quarters=c(1:4))
 hl.scowcgfs <- getDATRAS(record='HL', survey='SCOWCGFS', years=c(2011:last.year), quarters=c(1:4))
+hl.canmar <- getDATRAS(record='HL', survey='Can-Mar', years=c(1970:last.year), quarters=c(1:4))
 
 hl <- rbind(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.scorock,
-            hl.swc, hl.scowcgfs)
+            hl.swc, hl.scowcgfs, hl.canmar)
 
-rm(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.scorock, hl.swc, hl.scowcgfs, 
-   hh.ns, hh.baltic, hh.evhoe, hh.cgfs, hh.igfs, hh.nigfs, hh.pt, hh.rock, hh.scorock, hh.swc, hh.scowcgfs)
+rm(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.scorock, hl.swc, hl.scowcgfs, hl.canmar, 
+   hh.ns, hh.baltic, hh.evhoe, hh.cgfs, hh.igfs, hh.nigfs, hh.pt, hh.rock, hh.scorock, hh.swc, hh.scowcgfs, hh.canmar)
 
 
 ##########################################################################################
@@ -70,11 +72,15 @@ hh$HaulID <- paste(hh$Survey, hh$Year,hh$Quarter, hh$Country, hh$Ship, hh$Gear, 
 hhn <- unique(hh$HaulID)
 length(hhn)==nrow(hh)
 
+# check which one is not
 # pb <- c()
 # for (i in 1:length(hhn)){
 #  j <- which(hh$HaulID==hhn[i])
 #  if(length(j)>1){pb <- hhn[i]}
 # }
+
+# > pb
+# [1] "NS-IBTS 1995 1 NA AA36 GOV 999 999"
 
 hh$DateofCalculation <- hh$ThClineDepth <- hh$ThermoCline <- hh$SwellHeight <- hh$SwellDir <- hh$WindSpeed <- hh$WindDir <- hh$BotCurSpeed <- NULL
 hh$BotCurDir <- hh$SurCurSpeed <- hh$SurCurDir <- hh$SpeedWater <- hh$TowDir <- hh$WgtGroundRope <- hh$KiteDim <- hh$Buoyancy <- NULL
@@ -84,17 +90,17 @@ hh$HydroStNo <- hh$HaulLat <- hh$SweepLngt <- hh$HaulLong <- hh$DayNight <- hh$S
 hh <- hh %>% filter(HaulID!="NS-IBTS 1995 1 NA AA36 GOV 999 999") # remove the non-unique HaulID in hh and hl
 hl <- hl %>% filter(HaulID!="NS-IBTS 1995 1 NA AA36 GOV 999 999")
 
-# Only keep hauls where there is the length composition. 60162 hauls in hh and 60135 in hl
+# Only keep hauls where there is the length composition. 70273 hauls in hh and 70273 in hl
 hh <- subset(hh, hh$HaulID %in% hl$HaulID)
 hl <- subset(hl, hl$HaulID %in% hh$HaulID)
 
-if(identical(sort(unique(hh$HaulID)),sort(unique(hl$HaulID)))){
- save(hh, file='data/HH.28.02.2021.RData')
- save(hl, file='data/HL.28.02.2021.RData')
-}
+# save step for future use (save outside github as file is large)
+#if(identical(sort(unique(hh$HaulID)),sort(unique(hl$HaulID)))){
+# save(hh, file='data/HH.28.02.2021.RData')
+# save(hl, file='data/HL.28.02.2021.RData')
+# }
 #load('data/HH.28.02.2021.RData')
 #load('data/HL.28.02.2021.RData')
-
 
 ##########################################################################################
 #### MERGE HH and HL FILES
@@ -138,8 +144,8 @@ survey <- survey %>%
 ##########################################################################################
 #### RESCALE DATA INTO ABUNDANCE FOR THE HAUL DURATION AND ABUNDANCE AT LENGTH
 ##########################################################################################
-# If Data Type=='C', abundance at length already readjusted with time so get back the abundance for the actual duration of the haul.
-# If data type=='R', abundance at length is mulitplied by subfactor and adjusted to time
+# If Data Type=='C', abundance at length already re-adjusted with time so get back the abundance for the actual duration of the haul.
+# If data type=='R', abundance at length is multiplied by sub-factor and adjusted to time
 survey <- survey %>% 
   mutate(HLNoAtLngt = case_when(DataType=='C' ~ HLNoAtLngt*SubFactor*HaulDur/60,
                                 DataType %in% c('S','R') ~ HLNoAtLngt*SubFactor),
@@ -151,12 +157,11 @@ survey <- survey %>%
   select(-HaulVal, -DataType, -StdSpecRecCode, -SpecVal, -SubWgt, -SubFactor) %>% 
   mutate(Survey = if_else(Survey=='SCOWCGFS', 'SWC-IBTS', Survey)) %>% 
   mutate(Survey = if_else(Survey=='SCOROC','ROCKALL',Survey)) %>% 
-  filter(!(Survey=="NS-IBTS" & BycSpecRecCode %in% c(0,2,3,4,5)), # remove hauls where not all species are recorded
-         !(Survey=="BITS" & BycSpecRecCode==0))
-
-
+  filter(!(Survey=="NS-IBTS" & BySpecRecCode %in% c(0,2,3,4,5)), # remove hauls where not all species are recorded
+         !(Survey=="BITS" & BySpecRecCode==0))
+ 
 ##########################################################################################
-#### GET THE SWEPT AREA
+#### GET THE SWEPT AREA in km2
 ##########################################################################################
 survey <- survey %>% 
   mutate(WingSpread = replace(WingSpread, WingSpread==-9, NA),
@@ -180,6 +185,8 @@ evhoe <- survey %>%
 # plot(Area.swept ~ Speed, data=evhoe)
 # plot(Area.swept ~ Distance, data=evhoe)
 
+evhoe$HaulDur[evhoe$HaulDur == 1470] <- NA # remove one outlier for model fit
+evhoe$Area.swept[evhoe$Area.swept == 0] <- NA # remove zeros from area swept
 evhoe$Depth <- log(evhoe$Depth)
 lm0 <- lm(Area.swept ~ HaulDur + Depth, data=evhoe)
 summary(lm0)
@@ -198,7 +205,7 @@ nsibts <- survey %>%
   filter(Survey=='NS-IBTS',
          #Year>1989,
          !is.na(Depth)) %>%
-  select(Year, HaulID, HaulDur, Area.swept, Depth, Ship, Gear, GearExp, DoorType, Speed, Distance) %>%
+  select(Year, HaulID, HaulDur, Area.swept, Depth, Ship, Gear, GearEx.x, DoorType, Speed, Distance) %>%
   distinct()
 
 # par(mfrow=c(2,2))
@@ -207,6 +214,7 @@ nsibts <- survey %>%
 # plot(Area.swept ~ Distance, data=nsibts)
 # plot(Area.swept ~ Speed, data=nsibts)
 
+nsibts$Area.swept[nsibts$Area.swept < 0.0035] <- NA # remove one outlier (doesn't affect prediction)
 nsibts$Depth <- log(nsibts$Depth)
 lm0 <- lm(Area.swept ~ HaulDur + Depth, data=nsibts)
 
@@ -372,6 +380,7 @@ rock <- rock %>%
 area2 <- rbind(area2, rock)
 
 ### PORTUGAL ###
+# no swept area information, use data from all other surveys
 pt <- survey %>%
   filter(!is.na(HaulDur),
          !is.na(Depth),
@@ -384,6 +393,7 @@ pt <- survey %>%
 # plot(Area.swept ~ Depth, data=pt)
 # plot(Area.swept ~ Speed, data=pt)
 # plot(Area.swept ~ Distance, data=pt)
+pt$Speed[pt$Speed >30] <- NA
 lm0 <- lm(Area.swept ~ HaulDur + Depth + Speed, data=pt)
 
 pred0 <- predict(lm0, newdata=pt, interval='confidence', level=0.95)
@@ -396,7 +406,14 @@ pt <- pt %>%
   dplyr::rename(Area2=Area.swept)
 area2 <- rbind(area2, pt)
 
-rm(bits, cgfs, ie, nsibts, pt, nigfsL, nigfsS, nigfs, pred0, lm0, evhoe, swc, rock)
+### Can-mar ###
+cmar <- survey %>%
+  filter(Survey=='Can-Mar') %>%
+  select(HaulID, Area.swept) %>%
+  dplyr::rename(Area2=Area.swept)
+area2 <- rbind(area2, cmar)
+
+rm(bits, cgfs, ie, nsibts, pt, nigfsL, nigfsS, nigfs, pred0, lm0, evhoe, swc, rock, cmar)
 
 # Paste new estimates to survey data frame
 area2 <- area2 %>% distinct()
