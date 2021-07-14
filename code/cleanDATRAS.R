@@ -15,7 +15,7 @@ library(icesDatras)
 library(worms)
 library(worrms)
 library(crul)
-library(urltools)
+library(urltools) # check if you have Rcpp installed, no need to load
 
 
 ##########################################################################################
@@ -442,7 +442,7 @@ survey <- survey %>%
          numh = (TotalNo*60)/HaulDur, # abundance/hour
          wgth = CatCatchWgt*60/(HaulDur*1000), #weight in kg/h
          num = TotalNo, #raw number of individuals
-         wgt = CatCatchWgt, # raw weight         
+         wgt = CatCatchWgt/1000, # raw weight in kg         
          numlencpue = HLNoAtLngt/Area.swept, #abundance/km2 per length class
          numlenh = HLNoAtLngt*60/HaulDur, #abundance/h per length class
          Season = 'NA',
@@ -479,7 +479,7 @@ df_test$authority <- df_test$status <- df_test$taxonRankID <- df_test$isBrackish
 dim(subset(df_test, is.na(df_test$phylum))) # ok
 
 # In the class column, we only keep the 5 groups we want. 
-df_test <- subset(df_test, class %in% c("Elasmobranchii","Actinopterygii","Holocephali","Myxini","Petromyzonti")) 
+df_test <- subset(df_test, class %in% c("Elasmobranchii","Actinopteri","Holocephali","Myxini","Petromyzonti")) 
 
 keep_sp <- data.frame(df_test) # subsetting
 keep_sp <- data.frame(unlist(keep_sp$valid_name)) #unlisting
@@ -563,7 +563,7 @@ list.taxa <- survey %>%
 
 # get LME
 library(rgdal)
-shape1 <- readOGR(dsn = "D:/DATA/Geography",layer="LMEs66")
+shape1 <- readOGR(dsn = "C:/Users/danie/Dropbox/Werk/Archief/2018 Nat Eco Evo/LME shapefile",layer="lme66")
 coords <- list.taxa %>%
   dplyr::select(ShootLat, ShootLong, Survey) %>%
   distinct()
