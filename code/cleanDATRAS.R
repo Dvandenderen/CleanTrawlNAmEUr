@@ -146,12 +146,13 @@ survey <- survey %>%
 ##########################################################################################
 # If Data Type=='C', abundance at length already re-adjusted with time so get back the abundance for the actual duration of the haul.
 # If data type=='R', abundance at length is multiplied by sub-factor and adjusted to time
+survey$CatCatchWgt = as.numeric(survey$CatCatchWgt)
+
 survey <- survey %>% 
   mutate(HLNoAtLngt = case_when(DataType=='C' ~ HLNoAtLngt*SubFactor*HaulDur/60,
                                 DataType %in% c('S','R') ~ HLNoAtLngt*SubFactor),
          TotalNo = case_when(DataType=='C' ~ TotalNo*HaulDur/60, 
                              DataType %in% c('S','R') ~ TotalNo),
-         CatCatchWgt = as.numeric(CatCatchWgt),
          CatCatchWgt = case_when(DataType=='C' ~ CatCatchWgt*HaulDur/60,
                                  DataType %in% c('S','R') ~ CatCatchWgt)) %>% 
   select(-HaulVal, -DataType, -StdSpecRecCode, -SpecVal, -SubWgt, -SubFactor) %>% 
@@ -541,18 +542,19 @@ survey <- survey %>%
 detach(package:worms)
 detach(package:plyr)
 
-# select only certain gears
+# select only certain gears 
 # 1. summary of gears per survey
 gears <- data.frame(survey) %>% 
   group_by(Survey, Gear) %>% 
   summarise(hauls = length(unique(HaulID)), years = length(unique(Year))) %>% 
   select(Survey, Gear, hauls, years)
 
-# 2. only select certain gears per survey
+# 2. only select certain gears per survey (GOV and/or most dominant in cases without GOV)
 survey <- survey %>% 
   filter(!(Survey=="NS-IBTS" & Gear %in% c('ABD', 'BOT', 'DHT', 'FOT', 'GRT', 'H18', 'HOB', 'HT', 'KAB', 'VIN')),
          !(Survey=="BITS" & Gear %in% c('CAM', 'CHP', 'DT', 'EGY', 'ESB', 'EXP', 'FOT', 'GRT', 'H20', 'HAK', 'LBT','SON')),
-         !(Survey=="PT-IBTS" & Gear=='CAR'))
+         !(Survey=="PT-IBTS" & Gear=='CAR'),
+         !(Survey=="Can-Mar" & Gear=='Y36'))
 
 
 # 3. associate an LME to each haul and make final list of species
@@ -597,7 +599,7 @@ long50 <- coords$ShootLong[ind]
 lat50 <- coords$ShootLat[ind]
 lme50 <- rep(levels(coords$lme), each=50)
 #For each haul without LME find a close LME that has an LME number already
-nlme <- subset(coords, is.na(lme)) # many hauls without LME 8151
+nlme <- subset(coords, is.na(lme)) # many hauls without LME 710
 nlme$ShootLat <- as.numeric(as.vector(nlme$ShootLat))
 nlme$ShootLong <- as.numeric(as.vector(nlme$ShootLong))
 long50 <- as.numeric(as.vector(long50))
@@ -615,8 +617,10 @@ coords$ShootLat <- as.numeric(as.vector(coords$ShootLat))
 coords$ShootLong <- as.numeric(as.vector(coords$ShootLong))
 
 # rockall not assigned to Faroe plateau but to celtic sea LME
+coords$lme <- as.character(coords$lme)
 coords <- coords %>%
-  mutate(lme = replace(lme, Survey=='ROCKALL', '24'))
+  mutate(lme = replace(lme, Survey  =='ROCKALL', '60')) %>%
+    as.data.frame()
 #plot(coords$ShootLong, coords$ShootLat, col=rainbow(length(unique(coords$lme)))[as.factor(coords$lme)], pch=".")
 
 survey <- left_join(survey, coords, by=c('ShootLat', 'ShootLong','Survey')) 
@@ -630,12 +634,12 @@ list.taxa <- survey %>%
          Subspecies = str_split(Species, pattern = " ", simplify=T)[,3],
          Species = str_split(Species, pattern = " ", simplify=T)[,2],
          Species = if_else(Subspecies!="", paste(Species, Subspecies, sep=" "), Species))
-write.csv(data.frame(list.taxa), file="traits/taxa.DATRAS.FB.tofill4.csv", row.names=FALSE)
-save(survey, file = "data/DATRAS.before.lw.14MAR2021.RData")
+write.csv(data.frame(list.taxa), file="traits/taxa.DATRAS.FB.tofill5.csv", row.names=FALSE) # not filled yet, continue with 4 (from Aurore)
+save(survey, file = "data/DATRAS_before_lw_19Jul2021.RData")
 
 
 # 4. re-calculate weights with length-weight relationships
-load('data/DATRAS.before.lw.14MAR2021.RData')
+load('data/DATRAS_before_lw_19Jul2021.RData')
 datalw <- read.csv('traits/taxa.DATRAS.FB_filled4.csv') %>% 
   mutate(Taxon = case_when(level=='family' ~ family,
                            level=='genus' ~ genus,
@@ -652,6 +656,11 @@ survey <- survey %>%
 
 survey[survey$Species=='Syngnatus',]$Taxon <- 'Syngnathus'
 survey[survey$Species=='Syngnatus',]$Species <- 'Syngnathus'
+
+# make sure ROCKALL is part of LME 24 (filled version 4)
+survey <- survey %>%
+  mutate(lme = replace(lme, Survey  =='ROCKALL', '24')) %>%
+  as.data.frame()
 
 # summarize abundance/weight at the haul level
 survey.num <- left_join(survey, datalw, by=c('Taxon','lme')) %>% 
@@ -694,31 +703,192 @@ library(ggplot2)
 cor(x = survey3$numh, y = survey3$numlenh, method = 'pearson')
 xx <- subset(survey3, !is.na(numcpue))
 cor(x = xx$numcpue, y = xx$numlencpue, method = 'pearson')
-# only a scaling problem with EVHOE?
+
+# check weights
+xx <- subset(survey3, wtcpue   >0 & wgtlencpue>0)
+cor(x = xx$wtcpue , y = xx$wgtlencpue, method = 'pearson')
 
 xx <- subset(survey3, wgth>0 & wgtlenh>0)
 cor(x = xx$wgth, y = xx$wgtlenh, method = 'pearson')
 
-ggplot(survey3, aes(x=numh, y=numlenh)) + geom_point() +
-  geom_abline(intercept = 0, slope = 1, color="red", 
-              linetype="dashed", size=0.5)
+### cor = 0.92 and 0.90 so something does not work.
 
-ggplot(subset(survey3, Survey=='SWC-IBTS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+##########################################################################################
+# CHECK PER SURVEY
+##########################################################################################
+
+# no zeros
+xx <- subset(survey3, wgth>0 & wgtlenh>0)
+
+# rockall looks OK
+ggplot(subset(xx, Survey=='ROCKALL'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10() 
+
+# IE-IGFS looks OK
+ggplot(subset(xx, Survey=='IE-IGFS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10() 
+
+# NIGFS looks OK
+ggplot(subset(xx, Survey=='NIGFS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10() 
+
+# PT-IBTS looks OK
+ggplot(subset(xx, Survey=='PT-IBTS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10() 
+
+# FR-CGFS looks OK
+ggplot(subset(xx, Survey=='FR-CGFS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10() 
+
+# SWC-IBTS issue
+ggplot(subset(xx, Survey=='SWC-IBTS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
   geom_abline(intercept = 0, slope = 1, color="red", 
               linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
 
-# survey3$ratio <- survey3$wgtlenh/survey3$wgth
-# for many hauls, the ratio between the calculated weight and the measured weight is very different
-# I looked at examples and sometimes the measured weights seems to be way lower than it should be
-# by comparing the size of the individuals and the weight an individual should be
-# since there is a 1 to 1 line between the two types of abundances
-# and the length-weight relationships seem to be right
-# there is a problem with the reported weight in surveys
+comp <- subset(xx, Survey=='SWC-IBTS') %>% 
+  select(HaulID,wgtlenh,wgth) %>% 
+  distinct() %>% 
+  group_by(HaulID) %>%
+  summarize_at(.vars=c('wgtlenh', 'wgth'), .funs = function(x) sum(x)) %>% 
+  ungroup() %>%
+  as.data.frame()
 
+ggplot(comp, aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
+
+comp$factor <-   comp$wgtlenh / comp$wgth 
+plot(comp$factor)
+resc <- comp$HaulID[comp$factor > 40]
+
+# after check with original haul length data (HL) for some resc haulid, weight is clearly wrong factor 100  
+survey3 <- survey3 %>%
+  mutate(wtcpue = if_else(HaulID %in% resc, wtcpue*100,wtcpue),
+         wgth = if_else(HaulID %in% resc , wgth*100,wgth),
+         wgt = if_else(HaulID %in% resc , wgt*100,wgt))
+
+# BITS issue
+ggplot(subset(xx, Survey=='BITS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10() 
+
+comp <- subset(xx, Survey=='BITS') %>% 
+  select(HaulID,wgtlenh,wgth) %>% 
+  distinct() %>% 
+  group_by(HaulID) %>%
+  summarize_at(.vars=c('wgtlenh', 'wgth'), .funs = function(x) sum(x)) %>% 
+  ungroup() %>%
+  as.data.frame()
+
+ggplot(comp, aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
+
+comp$factor <-   comp$wgtlenh / comp$wgth
+plot(comp$factor)
+resc <- comp$HaulID[comp$factor > 40]
+
+# after check with original haul length data (HL) for some resc haulid, weight is clearly wrong factor 100  
+survey3 <- survey3 %>%
+  mutate(wtcpue = if_else(HaulID %in% resc, wtcpue*100,wtcpue),
+         wgth = if_else(HaulID %in% resc , wgth*100,wgth),
+         wgt = if_else(HaulID %in% resc , wgt*100,wgt))
+
+# EVHOE may have an issue, no changes as not very clear
+ggplot(subset(xx, Survey=='EVHOE'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
+
+comp <- subset(xx, Survey=='EVHOE') %>% 
+  select(HaulID,wgtlenh,wgth) %>% 
+  distinct() %>% 
+  group_by(HaulID) %>%
+  summarize_at(.vars=c('wgtlenh', 'wgth'), .funs = function(x) sum(x)) %>% 
+  ungroup() %>%
+  as.data.frame()
+
+ggplot(comp, aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
+
+comp$factor <-   comp$wgtlenh / comp$wgth 
+plot(comp$factor)
+
+# NS - IBTS issue
+ggplot(subset(xx, Survey=='NS-IBTS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10() 
+
+comp <- subset(xx, Survey=='NS-IBTS') %>% 
+  select(HaulID,wgtlenh,wgth) %>% 
+  distinct() %>% 
+  group_by(HaulID) %>%
+  summarize_at(.vars=c('wgtlenh', 'wgth'), .funs = function(x) sum(x)) %>% 
+  ungroup() %>%
+  as.data.frame()
+
+ggplot(comp, aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
+
+comp$factor <-   comp$wgtlenh / comp$wgth
+comp$uni <- c(1:nrow(comp))
+plot(comp$factor~comp$uni,ylim=c(0,120))
+points(comp$factor[comp$factor > 20]~comp$uni[comp$factor > 20],col="red")
+points(comp$factor[comp$factor > 8 & comp$factor <20]~comp$uni[comp$factor  > 8 & comp$factor <20],col="blue")
+
+# two issues - one estimate 100 times higher based on length, the other 10 times
+resc <- comp$HaulID[comp$factor > 20] 
+resc2 <- comp$HaulID[comp$factor > 8 & comp$factor <20]
+
+# after check with original haul length data (HL) for some resc haulid, weight is clearly wrong factor 100 
+# and also a cluster of factor 10
+survey3 <- survey3 %>%
+  mutate(wtcpue = if_else(HaulID %in% resc, wtcpue*100,wtcpue),
+         wgth = if_else(HaulID %in% resc , wgth*100,wgth),
+         wgt = if_else(HaulID %in% resc , wgt*100,wgt))
+
+survey3 <- survey3 %>%
+  mutate(wtcpue = if_else(HaulID %in% resc2, wtcpue*10,wtcpue),
+         wgth = if_else(HaulID %in% resc2 , wgth*10,wgth),
+         wgt = if_else(HaulID %in% resc2 , wgt*10,wgt))
+
+# Can-MAR not needed weight is filled for all
+
+# check again correlations
+xx <- subset(survey3, wtcpue> 0 & wgtlencpue>0)
+cor(x = xx$wtcpue , y = xx$wgtlencpue, method = 'pearson') # looks better
+
+xx <- subset(survey3, wgth>0 & wgtlenh>0)
+cor(x = xx$wgth, y = xx$wgtlenh, method = 'pearson') # looks better
+
+# now check per haul without zeros, NAs
+xx <- subset(survey3, wtcpue>0 & wgtlencpue>0)
+
+comp <- xx %>% 
+  select(HaulID,wgtlencpue,wtcpue) %>% 
+  distinct() %>% 
+  group_by(HaulID) %>%
+  summarize_at(.vars=c('wgtlencpue', 'wtcpue'), .funs = function(x) sum(x)) %>% 
+  ungroup() %>%
+  as.data.frame()
+
+ggplot(comp, aes(x=wtcpue, y=wgtlencpue)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
+
+cor(x = xx$wtcpue , y = xx$wgtlencpue, method = 'pearson')
+# [1] 0.9635742
 
 ##########################################################################################
 #### SAVE DATA
 ##########################################################################################
 survey3 <- survey3 %>% 
-  select(-num, -wgt)
-save(survey3, file='data/ICESsurveys14MAR2021.RData')
+  select(-num, -wgt) %>%
+  as.data.frame()
+save(survey3, file='data/ICESsurveys18July2021.RData')
