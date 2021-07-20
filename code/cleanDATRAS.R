@@ -565,7 +565,7 @@ list.taxa <- survey %>%
 
 # get LME
 library(rgdal)
-shape1 <- readOGR(dsn = "C:/Users/danie/Dropbox/Werk/Archief/2018 Nat Eco Evo/LME shapefile",layer="lme66")
+shape1 <- readOGR(dsn = "LME shapefile",layer="lme66")
 coords <- list.taxa %>%
   dplyr::select(ShootLat, ShootLong, Survey) %>%
   distinct()
@@ -639,7 +639,7 @@ save(survey, file = "data/DATRAS_before_lw_19Jul2021.RData")
 
 
 # 4. re-calculate weights with length-weight relationships
-load('data/DATRAS_before_lw_19Jul2021.RData')
+load('data/DATRAS_before_lw_19Jul2021.RData') # note not on github to keep it small in size
 datalw <- read.csv('traits/taxa.DATRAS.FB_filled4.csv') %>% 
   mutate(Taxon = case_when(level=='family' ~ family,
                            level=='genus' ~ genus,
@@ -657,7 +657,7 @@ survey <- survey %>%
 survey[survey$Species=='Syngnatus',]$Taxon <- 'Syngnathus'
 survey[survey$Species=='Syngnatus',]$Species <- 'Syngnathus'
 
-# make sure ROCKALL is part of LME 24 (filled version 4)
+# make sure ROCKALL is part of LME 24 (change when there is a filled version 5)
 survey <- survey %>%
   mutate(lme = replace(lme, Survey  =='ROCKALL', '24')) %>%
   as.data.frame()
