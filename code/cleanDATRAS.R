@@ -40,6 +40,10 @@ hh.canmar <- getDATRAS(record='HH', survey='Can-Mar', years=c(1970:last.year), q
 hh <- rbind(hh.ns, hh.baltic, hh.evhoe, hh.cgfs, hh.igfs, hh.nigfs, hh.pt, hh.rock, hh.scorock, 
             hh.swc, hh.scowcgfs, hh.canmar)
 
+# save (save outside github as file is large)
+# setwd("")
+# save(hh, file='haulinfoDatras_210717.RData')
+
 # Length info from DATRAS
 hl.ns <- getDATRAS(record='HL', survey='NS-IBTS', years=c(1967:last.year), quarters=c(1,3))
 hl.baltic <- getDATRAS(record='HL', survey='BITS', years=c(1991:last.year), quarters=c(1,4))
@@ -57,6 +61,10 @@ hl.canmar <- getDATRAS(record='HL', survey='Can-Mar', years=c(1970:last.year), q
 hl <- rbind(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.scorock,
             hl.swc, hl.scowcgfs, hl.canmar)
 
+# save (save outside github as file is large)
+# setwd("")
+#save(hl, file='lengthinfoDatras_210717.RData')
+
 rm(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.scorock, hl.swc, hl.scowcgfs, hl.canmar, 
    hh.ns, hh.baltic, hh.evhoe, hh.cgfs, hh.igfs, hh.nigfs, hh.pt, hh.rock, hh.scorock, hh.swc, hh.scowcgfs, hh.canmar)
 
@@ -65,7 +73,6 @@ rm(hl.ns, hl.baltic, hl.evhoe, hl.cgfs, hl.igfs, hl.nigfs, hl.pt, hl.rock, hl.sc
 #### CREATE A UNIQUE HAUL ID
 ##########################################################################################
 hl$HaulID <- paste(hl$Survey, hl$Year,hl$Quarter, hl$Country, hl$Ship, hl$Gear, hl$StNo, hl$HaulNo)
-hl$SweepLngt <- hl$SpecCodeType <- hl$SpecCode <- hl$Sex <- hl$DateofCalculation <- hl$RecordType <- NULL
 hh$HaulID <- paste(hh$Survey, hh$Year,hh$Quarter, hh$Country, hh$Ship, hh$Gear, hh$StNo, hh$HaulNo)
 
 # Is the HaulID unique?
@@ -81,12 +88,6 @@ length(hhn)==nrow(hh)
 
 # > pb
 # [1] "NS-IBTS 1995 1 NA AA36 GOV 999 999"
-
-hh$DateofCalculation <- hh$ThClineDepth <- hh$ThermoCline <- hh$SwellHeight <- hh$SwellDir <- hh$WindSpeed <- hh$WindDir <- hh$BotCurSpeed <- NULL
-hh$BotCurDir <- hh$SurCurSpeed <- hh$SurCurDir <- hh$SpeedWater <- hh$TowDir <- hh$WgtGroundRope <- hh$KiteDim <- hh$Buoyancy <- NULL
-hh$DoorWgt <- hh$DoorSurface <- hh$WarpDen <- hh$Warpdia <- hh$Warplngt <- hh$Tickler <- hh$Rigging <- hh$Netopening <- NULL
-hh$HydroStNo <- hh$HaulLat <- hh$SweepLngt <- hh$HaulLong <- hh$DayNight <- hh$Stratum <- hh$TimeShot <- hh$Day <- hh$RecordType <- hh$GearExp <- hh$DoorType <- NULL
-
 hh <- hh %>% filter(HaulID!="NS-IBTS 1995 1 NA AA36 GOV 999 999") # remove the non-unique HaulID in hh and hl
 hl <- hl %>% filter(HaulID!="NS-IBTS 1995 1 NA AA36 GOV 999 999")
 
@@ -102,6 +103,7 @@ hl <- subset(hl, hl$HaulID %in% hh$HaulID)
 #load('data/HH.28.02.2021.RData')
 #load('data/HL.28.02.2021.RData')
 
+
 ##########################################################################################
 #### MERGE HH and HL FILES
 ##########################################################################################
@@ -109,6 +111,16 @@ hl <- subset(hl, hl$HaulID %in% hh$HaulID)
 haulidhl <- sort(unique(hl$HaulID))
 haulidhh <- sort(unique(hh$HaulID))
 identical(haulidhh, haulidhl)
+
+# remove some columns in hl
+hl$SweepLngt <- hl$SpecCodeType <- hl$SpecCode <- hl$Sex <- hl$DateofCalculation <- hl$RecordType <- hl$GearEx <- NULL
+
+# remove some columns in hh
+hh$DateofCalculation <- hh$ThClineDepth <- hh$ThermoCline <- hh$SwellHeight <- hh$SwellDir <- hh$WindSpeed <- hh$WindDir <- hh$BotCurSpeed <- NULL
+hh$BotCurDir <- hh$SurCurSpeed <- hh$SurCurDir <- hh$SpeedWater <- hh$TowDir <- hh$WgtGroundRope <- hh$KiteDim <- hh$Buoyancy <- NULL
+hh$DoorWgt <- hh$DoorSurface <- hh$WarpDen <- hh$Warpdia <- hh$Warplngt <- hh$Tickler <- hh$Rigging  <- NULL
+hh$HydroStNo <- hh$HaulLat <-  hh$HaulLong <- hh$DayNight <- hh$Stratum <- hh$TimeShot <- hh$Day <- hh$RecordType <- hh$GearExp <- hh$DoorType <- NULL
+
 
 #survey <- merge(hh, hl, by='HaulID', all.x=FALSE, all.y=TRUE)
 survey <- right_join(hh, hl, by=c('HaulID','Survey','Quarter','Country','Ship','Gear','StNo','HaulNo','Year'))
@@ -164,267 +176,8 @@ survey <- survey %>%
 ##########################################################################################
 #### GET THE SWEPT AREA in km2
 ##########################################################################################
-survey <- survey %>% 
-  mutate(WingSpread = replace(WingSpread, WingSpread==-9, NA),
-         DoorSpread = replace(DoorSpread, DoorSpread==-9, NA),
-         Speed = replace(Speed, Speed==-9, NA),
-         Distance = replace(Distance, Distance==-9, NA),
-         Depth = replace(Depth, Depth==-9, NA),
-         Area.swept = Distance*0.001*DoorSpread*0.001,
-         Area.swept = if_else(is.na(Area.swept), Speed*1.852*HaulDur/60*DoorSpread*0.001, Area.swept))
 
-# Re-estimate the swept area from a linear model per survey
-### EVHOE ###
-evhoe <- survey %>%
-  filter(Survey=='EVHOE') %>%
-  select(-TotalNo, -NoMeas, -CatCatchWgt, -LngtCode, -LngtClass, -HLNoAtLngt, -AphiaID) %>%
-  distinct()
-
-# par(mfrow=c(2,2))
-# plot(Area.swept ~ Depth, data=evhoe)
-# plot(Area.swept ~ HaulDur, data=evhoe)
-# plot(Area.swept ~ Speed, data=evhoe)
-# plot(Area.swept ~ Distance, data=evhoe)
-
-evhoe$HaulDur[evhoe$HaulDur == 1470] <- NA # remove one outlier for model fit
-evhoe$Area.swept[evhoe$Area.swept == 0] <- NA # remove zeros from area swept
-evhoe$Depth <- log(evhoe$Depth)
-lm0 <- lm(Area.swept ~ HaulDur + Depth, data=evhoe)
-summary(lm0)
-
-pred0 <- predict.lm (object=lm0, newdata=evhoe, interval='confidence', level=0.95)
-evhoe <- cbind(evhoe, pred0)
-evhoe[is.na(evhoe$Area.swept),]$Area.swept <- evhoe[is.na(evhoe$Area.swept),]$fit
-
-evhoe <- evhoe %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept) # a few NA's
-area2 <- evhoe
-
-### North Sea ###
-nsibts <- survey %>%
-  filter(Survey=='NS-IBTS',
-         #Year>1989,
-         !is.na(Depth)) %>%
-  select(Year, HaulID, HaulDur, Area.swept, Depth, Ship, Gear, GearEx.x, DoorType, Speed, Distance) %>%
-  distinct()
-
-# par(mfrow=c(2,2))
-# plot(Area.swept ~ HaulDur, data=nsibts, log='xy')
-# plot(Area.swept ~ Depth, data=nsibts)
-# plot(Area.swept ~ Distance, data=nsibts)
-# plot(Area.swept ~ Speed, data=nsibts)
-
-nsibts$Area.swept[nsibts$Area.swept < 0.0035] <- NA # remove one outlier (doesn't affect prediction)
-nsibts$Depth <- log(nsibts$Depth)
-lm0 <- lm(Area.swept ~ HaulDur + Depth, data=nsibts)
-
-pred0 <- predict(lm0, newdata=nsibts, interval='confidence', level=0.95)
-nsibts <- cbind(nsibts,pred0)
-nsibts[is.na(nsibts$Area.swept),]$Area.swept <- nsibts[is.na(nsibts$Area.swept),]$fit
-
-nsibts <- nsibts %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept)
-area2 <- rbind(nsibts, area2)
-
-### SWC-IBTS ###
-swc <- survey %>%
-  filter(Survey=='SWC-IBTS') %>%
-  select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, Speed, Distance) %>%
-  distinct()
-
-# plot(Area.swept ~ HaulDur, data=swc)
-# plot(Area.swept ~ Depth, data=swc, log='x')
-swc$Depth <- log(swc$Depth)
-lm0 <- lm(Area.swept ~ HaulDur + Depth, data=swc)
-
-pred0 <- predict(lm0, newdata=swc, interval='confidence', level=0.95)
-swc <- cbind(swc,pred0)
-swc[is.na(swc$Area.swept),]$Area.swept <- swc[is.na(swc$Area.swept),]$fit
-
-swc <- swc %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept)
-area2 <- rbind(area2, swc)
-
-### BITS ###
-bits <- survey %>%
-  filter(Survey=='BITS') %>%
-  select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID) %>%
-  distinct()
-
-# plot(Area.swept ~ HaulDur, data=bits)
-# plot(Area.swept ~ Depth, data=bits, log='x')
-lm0 <- lm(Area.swept ~ HaulDur + log(Depth), data=bits)
-
-pred0 <- predict(lm0, newdata=bits, interval='confidence', level=0.95)
-bits <- cbind(bits,pred0)
-bits[is.na(bits$Area.swept),]$Area.swept <- bits[is.na(bits$Area.swept),]$fit
-
-bits <- bits %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept)
-area2 <- rbind(area2, bits)
-
-### IE-IGFS ###
-ie <- survey %>%
-  filter(Survey=='IE-IGFS',
-         Year>1989) %>%
-  select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID) %>%
-  distinct()
-
-# plot(Area.swept ~ HaulDur, data=ie)
-# plot(Area.swept ~ Depth, data=ie, log='x')
-ie$Depth <- log(ie$Depth)
-lm0 <- lm(Area.swept ~ HaulDur + Depth, data=ie)
-
-pred0 <- predict(lm0, newdata=ie, interval='confidence', level=0.95)
-ie <- cbind(ie,pred0)
-ie[is.na(ie$Area.swept),]$Area.swept <- ie[is.na(ie$Area.swept),]$fit
-
-ie <- ie %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept)
-area2 <- rbind(area2, ie)
-
-# FR-CGFS very few hauls with swept area data
-cgfs <- survey %>%
-  filter(Survey=='FR-CGFS') %>%
-  select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, Speed, Distance) %>%
-  distinct()
-
-# par(mfrow=c(2,2))
-# plot(Area.swept ~ HaulDur, data=cgfs)
-# plot(Area.swept ~ Depth, data=cgfs)
-# plot(Area.swept ~ Distance, data=cgfs) # Distance always reported
-
-lm0 <- lm(Area.swept ~ HaulDur + Depth + Distance, data=cgfs)
-
-pred0 <- predict(lm0, newdata=cgfs, interval='confidence', level=0.95)
-cgfs <- cbind(cgfs,pred0)
-cgfs[is.na(cgfs$Area.swept),]$Area.swept <- cgfs[is.na(cgfs$Area.swept),]$fit
-
-cgfs <- cgfs %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept)
-area2 <- rbind(area2, cgfs)
-
-### NIGFS ###
-nigfs <- survey %>%
-  filter(Survey=='NIGFS') %>%
-  mutate(DurQ = ifelse(HaulDur<40,'S','L')) %>%
-  select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, DurQ, Speed, Distance) %>%
-  distinct()
-
-# par(mfrow=c(1,2))
-# plot(Area.swept ~ HaulDur, data=nigfs)
-# plot(Area.swept ~ Depth, data=nigfs)
-
-# Model for short hauls
-nigfsS <- nigfs %>%
-  filter(DurQ=='S',
-         !is.na(Depth))
-# par(mfrow=c(2,2))
-# plot(Area.swept ~ HaulDur, data=nigfsS)
-# plot(Area.swept ~ Depth, data=nigfsS)
-# plot(Area.swept ~ Speed, data=nigfsS)
-nigfsS$Depth2 <- (nigfsS$Depth-mean(nigfsS$Depth))^2
-lm0 <- lm(Area.swept ~ HaulDur + Depth + Depth2, data=nigfsS)
-
-pred0 <- predict(lm0, newdata=nigfsS, interval='confidence', level=0.95)
-nigfsS <- cbind(nigfsS,pred0)
-nigfsS[is.na(nigfsS$Area.swept),]$Area.swept <- nigfsS[is.na(nigfsS$Area.swept),]$fit
-
-# Model for short hauls
-nigfsL <- nigfs %>%
-  filter(DurQ=='L',
-         !is.na(Depth))
-# par(mfrow=c(2,2))
-# plot(Area.swept ~ HaulDur, data=nigfsL)
-# plot(Area.swept ~ Depth, data=nigfsL)
-# plot(Area.swept ~ Speed, data=nigfsL)
-nigfsL$Depth2 <- (nigfsL$Depth-mean(nigfsL$Depth))^2
-lm0 <- lm(Area.swept ~ HaulDur + Depth + Depth2, data=nigfsL)
-
-pred0 <- predict(lm0, newdata=nigfsL, interval='confidence', level=0.95)
-nigfsL <- cbind(nigfsL,pred0)
-nigfsL[is.na(nigfsL$Area.swept),]$Area.swept <- nigfsL[is.na(nigfsL$Area.swept),]$fit
-
-nigfs <- rbind(nigfsL, nigfsS)
-nigfs <- nigfs %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept)
-area2 <- rbind(area2, nigfs)
-
-### ROCKALL ###
-rock <- survey %>%
-  filter(Survey=='ROCKALL') %>%
-  select(Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, Speed, Distance) %>%
-  distinct()
-
-# par(mfrow=c(2,2))
-# plot(Area.swept ~ HaulDur, data=rock)
-# plot(Area.swept ~ Depth, data=rock)
-# plot(Area.swept ~ Speed, data=rock)
-# plot(Area.swept ~ Distance, data=rock, log='x')
-
-lm0 <- lm(Area.swept ~ HaulDur + Depth, data=rock)
-
-pred0 <- predict(lm0, newdata=rock, interval='confidence', level=0.95)
-rock <- cbind(rock,pred0)
-rock[is.na(rock$Area.swept),]$Area.swept <- rock[is.na(rock$Area.swept),]$fit
-
-rock <- rock %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept)
-area2 <- rbind(area2, rock)
-
-### PORTUGAL ###
-# no swept area information, use data from all other surveys
-pt <- survey %>%
-   filter(!is.na(HaulDur),
-         !is.na(Depth),
-         !is.na(Speed),
-         Survey != 'Can-Mar') %>%
-  select(Survey, Year, HaulDur, Area.swept, Depth, Ship, Gear, HaulID, Speed, Distance) %>%
-  distinct()
-
-# par(mfrow=c(2,2))
-# plot(Area.swept ~ HaulDur, data=pt)
-# plot(Area.swept ~ Depth, data=pt)
-# plot(Area.swept ~ Speed, data=pt)
-# plot(Area.swept ~ Distance, data=pt)
-pt$Speed[pt$Speed >30] <- NA
-lm0 <- lm(Area.swept ~ HaulDur + Depth + Speed, data=pt)
-
-pred0 <- predict(lm0, newdata=pt, interval='confidence', level=0.95)
-pt <- cbind(pt,pred0)
-pt[is.na(pt$Area.swept),]$Area.swept <- pt[is.na(pt$Area.swept),]$fit
-
-pt <- pt %>%
-  filter(Survey=='PT-IBTS') %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept)
-area2 <- rbind(area2, pt)
-
-### Can-mar ###
-cmar <- survey %>%
-  filter(Survey=='Can-Mar') %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept)
-area2 <- rbind(area2, cmar)
-
-rm(bits, cgfs, ie, nsibts, pt, nigfsL, nigfsS, nigfs, pred0, lm0, evhoe, swc, rock, cmar)
-
-# Paste new estimates to survey data frame
-area2 <- area2 %>% distinct()
-survey0 <- left_join(survey, area2, by='HaulID')
-survey0 <- survey0 %>%
-  mutate(Area.swept = coalesce(Area.swept, Area2)) %>%
-  select(-Area2) %>%
-  filter(is.na(Area.swept) | Area.swept>0)
-survey <- survey0
+source('code/source_DATRAS_wing_doorspread.R')
 
 
 ##########################################################################################

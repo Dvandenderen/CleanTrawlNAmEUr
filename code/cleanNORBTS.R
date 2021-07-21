@@ -6,13 +6,13 @@ library(dplyr)
 
 ### Load files
 # First setting the working directory to the main folder with the unzipped csv files
-#setwd("E:/DATA/Norway/btraal")
+data_dir <- "C:/Users/danie/Dropbox/Werk/Demersal fish and fisheries/Surveys/IMR-Norway/"
 
 # we create a vector list with the filenames that match with a .csv ending
-files = list.files('E:/DATA/Norway/btraal',pattern="*.csv")
+files = list.files(data_dir,pattern="*.csv")
 
 # then we call a lapply function that takes x (every csv) and calls it back to a rbind. Check the seperator to see if it's correct
-norw_dat = do.call(rbind, lapply(files, function(x) read.csv(paste('E:/DATA/Norway/btraal/',x,sep=''), stringsAsFactors = FALSE, header = TRUE, sep = ";")))
+norw_dat = do.call(rbind, lapply(files, function(x) read.csv(paste(data_dir,x,sep=''), stringsAsFactors = FALSE, header = TRUE, sep = ";")))
 rm(files)
 
 # change colnames from Norwegian to new names in English
