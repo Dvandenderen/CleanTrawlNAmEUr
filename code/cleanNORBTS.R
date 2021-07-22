@@ -9,17 +9,10 @@ library(dplyr)
 data_dir <- "C:/Users/danie/Dropbox/Werk/Demersal fish and fisheries/Surveys/IMR-Norway/"
 
 # we create a vector list with the filenames that match with a .csv ending
-<<<<<<< HEAD
-files = list.files('D:/DATA/Norway/btraal',pattern="*.csv")
-
-# then we call a lapply function that takes x (every csv) and calls it back to a rbind. Check the seperator to see if it's correct
-norw_dat = do.call(rbind, lapply(files, function(x) read.csv(paste('D:/DATA/Norway/btraal/',x,sep=''), stringsAsFactors = FALSE, header = TRUE, sep = ";")))
-=======
 files = list.files(data_dir,pattern="*.csv")
 
 # then we call a lapply function that takes x (every csv) and calls it back to a rbind. Check the seperator to see if it's correct
 norw_dat = do.call(rbind, lapply(files, function(x) read.csv(paste(data_dir,x,sep=''), stringsAsFactors = FALSE, header = TRUE, sep = ";")))
->>>>>>> 8672f586b165f1496162288aa8a5b49ce874a5bd
 rm(files)
 
 # change colnames from Norwegian to new names in English
@@ -163,10 +156,17 @@ norw_dat[norw_dat$HaulDur<0,]$HaulDur <- NA
 norw_dat$Distance <- norw_dat$Distance*1.852/1
 norw_dat[norw_dat$Distance<0,]$Distance <- NA
 
+# remove strange distances based on speed and duration
+norw_dat <- norw_dat %>%
+ mutate(fact = Distance / (HaulDur/60*(3 * 1.825 )), # speed is around 3 knots (see Jakobsen et al. 1998 - ICES C.M. 1997N: 17)
+        Distance = ifelse(fact <0.5 | fact >2, NA, Distance)) %>%
+          select(-fact)
+        
 # Change net opening to DoorSpread
 setnames(norw_dat, old = "Netopening", new="DoorSpread")
 norw_dat[norw_dat$DoorSpread<0,]$DoorSpread <- NA
 norw_dat$DoorSpread <- norw_dat$DoorSpread/1000 # transform m into km
+norw_dat$WingSpread <- norw_dat$DoorSpread * 0.3
 
 # Transform abundance and weight into the same units, transform weight measures all in kg
 # for column Weight, use MeasureType
@@ -208,7 +208,7 @@ norw_dat[norw_dat$NoMeas==(-1),]$NoMeas <- NA
 library(reshape2)
 library(dplyr)
 # rehape format with length measurements and delete 0
-norw_dat <- melt(norw_dat, c(names(norw_dat)[1:28], names(norw_dat)[70:73]), c(29:69), variable.name='Length', value.name='NumLen')
+norw_dat <- melt(norw_dat, c(names(norw_dat)[c(1:28)], names(norw_dat)[70:74]), c(29:69), variable.name='Length', value.name='NumLen')
 
 sum.pos <- norw_dat %>% #data with abundance at length, 354061 unique speciesxHauldIDs, it works!
   filter(Sum>0) %>%
@@ -225,10 +225,16 @@ norw_dat <- rbind(sum.pos, sum.na)
 
 # Estimate missing swept areas
 norw_dat <- norw_dat %>%
-  mutate(Area.swept = DoorSpread*Distance)
+  mutate(Area.doors = DoorSpread*Distance,
+         Area.swept = WingSpread*Distance)
+
+# set NA for one very high haul 
+norw_dat <- norw_dat %>%
+  mutate(Area.swept = ifelse(Area.swept > 2, NA, Area.swept),
+         Area.doors = ifelse(Area.doors > 2/0.3, NA, Area.doors))
 
 nor <- norw_dat %>%
-  select(HaulID, Year, Area.swept, HaulDur, Gear, Depth, Distance) %>%
+  select(HaulID, Year, Area.swept, Area.doors, HaulDur, Gear, Depth, Distance) %>%
   filter(Year>1989,
          !is.na(HaulDur)) %>%
   distinct()
@@ -243,15 +249,17 @@ lm0 <- lm(Area.swept ~ HaulDur + Dur2, data=nor)
 pred0 <- predict(lm0, newdata=nor, interval='confidence', level=0.95)
 nor <- cbind(nor,pred0)
 nor[is.na(nor$Area.swept),]$Area.swept <- nor[is.na(nor$Area.swept),]$fit
+nor[is.na(nor$Area.doors),]$Area.doors <- nor[is.na(nor$Area.doors),]$fit/0.3
 
 nor <- nor %>%
-  select(HaulID, Area.swept) %>%
-  dplyr::rename(Area2=Area.swept) %>%
+  select(HaulID, Area.swept,Area.doors) %>%
+  dplyr::rename(Area2=Area.swept, Door2 = Area.doors) %>%
   filter(Area2>=0)
 
 nor2 <- left_join(norw_dat, nor, by='HaulID')
 nor2 <- nor2 %>%
-  mutate(Area.swept = coalesce(Area.swept,Area2))
+  mutate(Area.swept = coalesce(Area.swept,Area2),
+         Area.doors = coalesce(Area.doors,Door2))
 norw_dat <- nor2  
 
 # Continue cleaning
@@ -270,7 +278,7 @@ norw_dat <- norw_dat %>%
          SST=NA,
          HaulDur = HaulDur2,
          Species = ScientificName) %>%
-  select(Survey, HaulID, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST, Species,
+  select(Survey, HaulID, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Area.doors, Gear, Depth, SBT, SST, Species,
          numcpue, wtcpue, numh, wgth, Length, numlencpue, numlenh)
 
 
@@ -286,7 +294,7 @@ levels(norw_dat$Length) <- c(kkkk, 5500)
 # To keep for th merge script
 #norw_dat <- subset(norw_dat, !norw_dat$Distance==0)
 # Remove haul duration lower than 20' and higher than 2h
-#norw_dat <- subset(norw_dat, norw_dat$HaulDur2<120 & norw_dat$HaulDur2>20)
+norw_dat <- subset(norw_dat, norw_dat$HaulDur<120 & norw_dat$HaulDur>20)
 
 
 
@@ -395,7 +403,7 @@ df_test$isExtinct <- df_test$modified <- df_test$valid_authority <- df_test$unac
 df_test$authority <- df_test$status <- df_test$taxonRankID <- df_test$isBrackish <- df_test$isFreshwater <- df_test$isTerrestrial <- df_test$match_type <- NULL
 
 # In the class column, we only keep the 5 class we want, corresponding to fish species
-df_test <- subset(df_test, class %in% c("Elasmobranchii","Actinopterygii","Holocephali","Myxini","Petromyzonti")) 
+df_test <- subset(df_test, class %in% c("Elasmobranchii","Actinopteri","Holocephali","Myxini","Petromyzonti")) 
 
 # List of names to keep
 keep_sp <- data.frame(df_test) # subsetting
@@ -416,20 +424,20 @@ norw_dat <- norw_dat %>%
 
 norw_dat <- norw_dat %>%
   mutate(StatRec=NA) %>% 
-  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST, Species, numcpue, 
+  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept,Area.doors, Gear, Depth, SBT, SST, Species, numcpue, 
          wtcpue, numh, wgth, Length, numlencpue, numlenh)
 
 rm(df_test, keep_sp, my_sp_taxo, norw_dat0, sp_list, sp_list_change, sp_list_ok, sp.pb, check.ab, check.sp, check.sub.ab)
 rm(check.sub.w, check.sum, clean.names, sum.na, sum.pos, times)
-rm(i, aphia_list, kk, kkk, Max, Min, y, cleanspl, kkkk)
+rm(i, aphia_list, kk, kkk, Max, Min, y, cleanspl, kkkk,pred0,lm0,nor,nor2)
 
 
 norw_dat <- norw_dat %>% 
   mutate(StatRec=NA) %>% 
-  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear,
+  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Area.doors, Gear,
          Depth, SBT, SST, Species, numcpue, wtcpue, numh, wgth, Length, numlencpue, numlenh)
 
-save(norw_dat, file='~/FISHGLOB/CleanTrawlNAmEUr/data/NORBTS26102020.RData')
+save(norw_dat, file='data/NORBTS22July2021.RData')
 
 
 ##########################################################################################
