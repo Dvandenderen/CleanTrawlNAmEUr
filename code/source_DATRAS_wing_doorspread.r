@@ -1,28 +1,3 @@
-survey <- survey %>% 
-  mutate(WingSpread = replace(WingSpread, WingSpread==-9, NA),
-         DoorSpread = replace(DoorSpread, DoorSpread==-9, NA),
-         Speed = replace(Speed, Speed==-9, NA),
-         Distance = replace(Distance, Distance==-9, NA),
-         Depth = replace(Depth, Depth==-9, NA))
-
-survey <- survey %>% 
-  mutate(WingSpread = replace(WingSpread, WingSpread== 0, NA),
-         DoorSpread = replace(DoorSpread, DoorSpread== 0, NA),
-         Distance = replace(Distance, Distance == 0, NA))
-
-# select only certain gears 
-# 1. summary of gears per survey
-gears <- data.frame(survey) %>% 
-  dplyr::group_by(Survey, Gear) %>% 
-  dplyr::summarise(hauls = length(unique(HaulID)), years = length(unique(Year))) %>% 
-  select(Survey, Gear, hauls, years)
-
-# 2. only select certain gears per survey (GOV and/or most dominant in cases without GOV)
-survey <- survey %>% 
-  filter(!(Survey=="NS-IBTS" & Gear %in% c('ABD', 'BOT', 'DHT', 'FOT', 'GRT', 'H18', 'HOB', 'HT', 'KAB', 'VIN')),
-         !(Survey=="BITS" & Gear %in% c('CAM', 'CHP', 'DT', 'EGY', 'ESB', 'EXP', 'FOT', 'GRT', 'H20', 'HAK', 'LBT','SON')),
-         !(Survey=="PT-IBTS" & Gear=='CAR'),
-         !(Survey=="Can-Mar" & Gear=='Y36'))
 
 #################################################################
 # Re-estimate the wing/doorspread from linear model per survey

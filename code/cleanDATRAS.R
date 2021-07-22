@@ -176,8 +176,33 @@ survey <- survey %>%
 ##########################################################################################
 #### GET THE SWEPT AREA in km2
 ##########################################################################################
+survey <- survey %>% 
+  mutate(WingSpread = replace(WingSpread, WingSpread==-9, NA),
+         DoorSpread = replace(DoorSpread, DoorSpread==-9, NA),
+         Speed = replace(Speed, Speed==-9, NA),
+         Distance = replace(Distance, Distance==-9, NA),
+         Depth = replace(Depth, Depth==-9, NA))
 
-source('code/source_DATRAS_wing_doorspread.R')
+survey <- survey %>% 
+  mutate(WingSpread = replace(WingSpread, WingSpread== 0, NA),
+         DoorSpread = replace(DoorSpread, DoorSpread== 0, NA),
+         Distance = replace(Distance, Distance == 0, NA))
+
+# select only certain gears 
+# summary of gears per survey
+gears <- data.frame(survey) %>% 
+  dplyr::group_by(Survey, Gear) %>% 
+  dplyr::summarise(hauls = length(unique(HaulID)), years = length(unique(Year))) %>% 
+  select(Survey, Gear, hauls, years)
+
+# only select certain gears per survey (GOV and/or most dominant in cases without GOV)
+survey <- survey %>% 
+  filter(!(Survey=="NS-IBTS" & Gear %in% c('ABD', 'BOT', 'DHT', 'FOT', 'GRT', 'H18', 'HOB', 'HT', 'KAB', 'VIN')),
+         !(Survey=="BITS" & Gear %in% c('CAM', 'CHP', 'DT', 'EGY', 'ESB', 'EXP', 'FOT', 'GRT', 'H20', 'HAK', 'LBT','SON')),
+         !(Survey=="PT-IBTS" & Gear=='CAR'),
+         !(Survey=="Can-Mar" & Gear=='Y36'))
+
+source('source_DATRAS_wing_doorspread.R')
 
 
 ##########################################################################################
@@ -207,7 +232,7 @@ survey <- survey %>%
   dplyr::rename(Length = LngtClass) %>% 
   # group_by(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST, AphiaID, Length) %>%
   # summarize_at(.vars=c('numcpue', 'wtcpue', 'numh', 'wgth', 'num', 'wgt', 'numlencpue','numlenh'), .funs=function(x) sum(x, na.rm=T)) %>%
-  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Gear, Depth, SBT, SST,
+  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Area.doors, Gear, Depth, SBT, SST,
          AphiaID, CatIdentifier, numcpue, wtcpue, numh, wgth, num, wgt, Length, numlencpue, numlenh)
 survey <- data.frame(survey)
 
@@ -217,6 +242,7 @@ survey <- data.frame(survey)
 ##########################################################################################
 
 survey$Species <- NA
+survey$AphiaID <- as.numeric(survey$AphiaID)
 dat.ices <- survey
 aphia_list <- unique(dat.ices$AphiaID)
 aphia_list <- aphia_list[!duplicated(aphia_list)]
@@ -256,7 +282,7 @@ dat.ices$ScientificName <- NULL
 survey <- dat.ices
 
 survey <- survey %>%
-  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, 
+  select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Area.doors, 
          Gear, Depth, SBT, SST, Family, Genus, Species, CatIdentifier, numcpue, wtcpue, numh, wgth, num, wgt, Length, numlencpue, numlenh)
 survey$AphiaID <- NULL
 
@@ -295,22 +321,7 @@ survey <- survey %>%
 detach(package:worms)
 detach(package:plyr)
 
-# select only certain gears 
-# 1. summary of gears per survey
-gears <- data.frame(survey) %>% 
-  group_by(Survey, Gear) %>% 
-  summarise(hauls = length(unique(HaulID)), years = length(unique(Year))) %>% 
-  select(Survey, Gear, hauls, years)
-
-# 2. only select certain gears per survey (GOV and/or most dominant in cases without GOV)
-survey <- survey %>% 
-  filter(!(Survey=="NS-IBTS" & Gear %in% c('ABD', 'BOT', 'DHT', 'FOT', 'GRT', 'H18', 'HOB', 'HT', 'KAB', 'VIN')),
-         !(Survey=="BITS" & Gear %in% c('CAM', 'CHP', 'DT', 'EGY', 'ESB', 'EXP', 'FOT', 'GRT', 'H20', 'HAK', 'LBT','SON')),
-         !(Survey=="PT-IBTS" & Gear=='CAR'),
-         !(Survey=="Can-Mar" & Gear=='Y36'))
-
-
-# 3. associate an LME to each haul and make final list of species
+# associate an LME to each haul and make final list of species
 ### Prepare list for estimating length-weight parameters
 list.taxa <- survey %>% 
   select(HaulID, Survey, ShootLat, ShootLong, Family, Genus, Species) %>% 
