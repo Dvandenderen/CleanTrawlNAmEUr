@@ -10,7 +10,7 @@ library(readr)
 fb <- odbcConnect('Fbapp')
 
 ### Load Data
-datalw <- read.csv("traits/taxa.DATRAS.FB.tofill4.csv") %>%
+datalw <- read.csv("traits/taxa.DATRAS.FB.tofill5.csv") %>%
   select(-Subspecies) %>% 
   mutate(level = case_when(Species=="" & Genus !="" ~ 'genus',
                            Species!="" ~ 'species',
@@ -142,10 +142,11 @@ for(i in 1:nrow(datalw)){
 head(datalw)
 
 ### Add missing info. from fishbase
-olddat <- read_csv("traits/taxa.DATRAS.FB_filled3.csv")
+olddat <- read_csv("traits/taxa.DATRAS.FB_filled4.csv")
 missing <- datalw %>%
   filter(is.na(a)) %>%
   select(-source, -type.length, -taxo, -a, -b)
+
 missing <- left_join(missing, olddat, by=c('family','genus','species','lme','fao','level','FB_E_Code'))
 
 datalw <- datalw %>%
@@ -153,4 +154,4 @@ datalw <- datalw %>%
 datalw <- rbind(datalw, missing)
 
 ### Save file
-write.csv(datalw, file='traits/taxa.DATRAS.FB_filled4.csv', row.names=FALSE)
+write.csv(datalw, file='traits/taxa.DATRAS.FB_filled5.csv', row.names=FALSE)
