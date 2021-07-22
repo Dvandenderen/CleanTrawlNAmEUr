@@ -9,10 +9,10 @@ library(dplyr)
 #setwd("E:/DATA/Norway/btraal")
 
 # we create a vector list with the filenames that match with a .csv ending
-files = list.files('E:/DATA/Norway/btraal',pattern="*.csv")
+files = list.files('D:/DATA/Norway/btraal',pattern="*.csv")
 
 # then we call a lapply function that takes x (every csv) and calls it back to a rbind. Check the seperator to see if it's correct
-norw_dat = do.call(rbind, lapply(files, function(x) read.csv(paste('E:/DATA/Norway/btraal/',x,sep=''), stringsAsFactors = FALSE, header = TRUE, sep = ";")))
+norw_dat = do.call(rbind, lapply(files, function(x) read.csv(paste('D:/DATA/Norway/btraal/',x,sep=''), stringsAsFactors = FALSE, header = TRUE, sep = ";")))
 rm(files)
 
 # change colnames from Norwegian to new names in English
