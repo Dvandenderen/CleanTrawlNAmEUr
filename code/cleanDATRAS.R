@@ -202,7 +202,7 @@ survey <- survey %>%
          !(Survey=="PT-IBTS" & Gear=='CAR'),
          !(Survey=="Can-Mar" & Gear=='Y36'))
 
-source('source_DATRAS_wing_doorspread.R')
+source('code/source_DATRAS_wing_doorspread.R')
 
 
 ##########################################################################################
@@ -321,7 +321,7 @@ survey <- survey %>%
 detach(package:worms)
 detach(package:plyr)
 
-# associate an LME to each haul and make final list of species
+# 1. associate an LME to each haul and make final list of species
 ### Prepare list for estimating length-weight parameters
 list.taxa <- survey %>% 
   select(HaulID, Survey, ShootLat, ShootLong, Family, Genus, Species) %>% 
@@ -398,13 +398,13 @@ list.taxa <- survey %>%
          Subspecies = str_split(Species, pattern = " ", simplify=T)[,3],
          Species = str_split(Species, pattern = " ", simplify=T)[,2],
          Species = if_else(Subspecies!="", paste(Species, Subspecies, sep=" "), Species))
-write.csv(data.frame(list.taxa), file="traits/taxa.DATRAS.FB.tofill5.csv", row.names=FALSE) # not filled yet, continue with 4 (from Aurore)
-save(survey, file = "data/DATRAS_before_lw_19Jul2021.RData")
+write.csv(data.frame(list.taxa), file="traits/taxa.DATRAS.FB.tofill5.csv", row.names=FALSE)
+#save(survey, file = "data/DATRAS_before_lw_xxxxx.RData") # could save intermediate stage
 
 
-# 4. re-calculate weights with length-weight relationships
-load('data/DATRAS_before_lw_19Jul2021.RData') # note not on github to keep it small in size
-datalw <- read.csv('traits/taxa.DATRAS.FB_filled4.csv') %>% 
+# 2. re-calculate weights with length-weight relationships
+#load('DATRAS_before_lw_xxxxx.RData') 
+datalw <- read.csv('traits/taxa.DATRAS.FB_filled5.csv') %>% 
   mutate(Taxon = case_when(level=='family' ~ family,
                            level=='genus' ~ genus,
                            level=='species' ~ paste(genus, species, sep=" ")),
@@ -421,45 +421,40 @@ survey <- survey %>%
 survey[survey$Species=='Syngnatus',]$Taxon <- 'Syngnathus'
 survey[survey$Species=='Syngnatus',]$Species <- 'Syngnathus'
 
-# make sure ROCKALL is part of LME 24 (change when there is a filled version 5)
-survey <- survey %>%
-  mutate(lme = replace(lme, Survey  =='ROCKALL', '24')) %>%
-  as.data.frame()
-
 # summarize abundance/weight at the haul level
 survey.num <- left_join(survey, datalw, by=c('Taxon','lme')) %>% 
-  select(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon,
+  select(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Area.doors,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon,
          CatIdentifier,numcpue,numh,num) %>% 
   distinct() %>% 
-  group_by(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon) %>%
+  group_by(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Area.doors,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon) %>%
   summarize_at(.vars=c('numcpue', 'numh', 'num'), .funs = function(x) sum(x)) %>% 
   ungroup()
 
 survey.wgt <- left_join(survey, datalw, by=c('Taxon','lme')) %>% 
-  select(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon,
+  select(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Area.doors,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon,
          CatIdentifier,wtcpue,wgth,wgt) %>% 
   distinct() %>% 
-  group_by(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon) %>%
+  group_by(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Area.doors,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon) %>%
   summarize_at(.vars=c('wtcpue', 'wgth', 'wgt'), .funs = function(x) sum(x)) %>% 
   ungroup()
 
 survey1 <- full_join(survey.num, survey.wgt, 
                      by=c('Survey','HaulID','StatRec','Year','Month','Quarter',
-                          'Season','ShootLat','ShootLong','HaulDur','Area.swept',
+                          'Season','ShootLat','ShootLong','HaulDur','Area.swept','Area.doors',
                           'Gear','Depth','SBT','SST','Family','Genus','Species','Taxon'))
 
 # summarize abundance/weight from length data
 survey2 <- left_join(survey, datalw, by=c('Taxon','lme')) %>% 
   mutate(wgtlencpue = numlencpue*a*Length^b/1000, # divide by 1000 to get kg/km2
          wgtlenh = numlenh*a*Length^b/1000) %>% # divide by 1000 to get kg/h
-  group_by(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon, a, b) %>% 
+  group_by(Survey,HaulID,StatRec,Year,Month,Quarter,Season,ShootLat,ShootLong,HaulDur,Area.swept,Area.doors,Gear,Depth,SBT,SST,Family,Genus,Species,Taxon, a, b) %>% 
   summarize_at(.vars=c('numlencpue','numlenh','wgtlencpue','wgtlenh'), .funs=function(x) sum(x)) %>% 
   ungroup()
 
 # merge both and compare
 nrow(survey1)==nrow(survey2)
 survey3 <- full_join(survey1, survey2, by=c('Survey','HaulID','StatRec','Year','Month','Quarter','Season','ShootLat','ShootLong','HaulDur',
-                                             'Area.swept','Gear','Depth','SBT','SST','Family','Genus','Species','Taxon'))
+                                             'Area.swept','Area.doors','Gear','Depth','SBT','SST','Family','Genus','Species','Taxon'))
 
 library(ggplot2)
 
@@ -475,7 +470,7 @@ cor(x = xx$wtcpue , y = xx$wgtlencpue, method = 'pearson')
 xx <- subset(survey3, wgth>0 & wgtlenh>0)
 cor(x = xx$wgth, y = xx$wgtlenh, method = 'pearson')
 
-### cor = 0.92 and 0.90 so something does not work.
+### cor = 0.88 and 0.89 -> check per survey.
 
 ##########################################################################################
 # CHECK PER SURVEY
@@ -506,6 +501,11 @@ ggplot(subset(xx, Survey=='PT-IBTS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
 
 # FR-CGFS looks OK
 ggplot(subset(xx, Survey=='FR-CGFS'), aes(x=wgth, y=wgtlenh)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1, color="red", 
+              linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10() 
+
+# Can-MARS looks OK
+ggplot(subset(xx, Survey=='Can-Mar'), aes(x=wgth, y=wgtlenh)) + geom_point() +
   geom_abline(intercept = 0, slope = 1, color="red", 
               linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10() 
 
@@ -622,14 +622,12 @@ survey3 <- survey3 %>%
          wgth = if_else(HaulID %in% resc2 , wgth*10,wgth),
          wgt = if_else(HaulID %in% resc2 , wgt*10,wgt))
 
-# Can-MAR not needed weight is filled for all
-
 # check again correlations
 xx <- subset(survey3, wtcpue> 0 & wgtlencpue>0)
-cor(x = xx$wtcpue , y = xx$wgtlencpue, method = 'pearson') # looks better
+cor(x = xx$wtcpue , y = xx$wgtlencpue, method = 'pearson') # is (a bit) better
 
 xx <- subset(survey3, wgth>0 & wgtlenh>0)
-cor(x = xx$wgth, y = xx$wgtlenh, method = 'pearson') # looks better
+cor(x = xx$wgth, y = xx$wgtlenh, method = 'pearson') # is (a bit) better
 
 # now check per haul without zeros, NAs
 xx <- subset(survey3, wtcpue>0 & wgtlencpue>0)
@@ -647,7 +645,7 @@ ggplot(comp, aes(x=wtcpue, y=wgtlencpue)) + geom_point() +
               linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
 
 cor(x = xx$wtcpue , y = xx$wgtlencpue, method = 'pearson')
-# [1] 0.9635742
+# [1] 0.934661
 
 ##########################################################################################
 #### SAVE DATA
@@ -655,4 +653,4 @@ cor(x = xx$wtcpue , y = xx$wgtlencpue, method = 'pearson')
 survey3 <- survey3 %>% 
   select(-num, -wgt) %>%
   as.data.frame()
-save(survey3, file='data/ICESsurveys18July2021.RData')
+save(survey3, file='data/ICESsurveys22July2021.RData')
