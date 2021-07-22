@@ -9,10 +9,17 @@ library(dplyr)
 data_dir <- "C:/Users/danie/Dropbox/Werk/Demersal fish and fisheries/Surveys/IMR-Norway/"
 
 # we create a vector list with the filenames that match with a .csv ending
+<<<<<<< HEAD
+files = list.files('D:/DATA/Norway/btraal',pattern="*.csv")
+
+# then we call a lapply function that takes x (every csv) and calls it back to a rbind. Check the seperator to see if it's correct
+norw_dat = do.call(rbind, lapply(files, function(x) read.csv(paste('D:/DATA/Norway/btraal/',x,sep=''), stringsAsFactors = FALSE, header = TRUE, sep = ";")))
+=======
 files = list.files(data_dir,pattern="*.csv")
 
 # then we call a lapply function that takes x (every csv) and calls it back to a rbind. Check the seperator to see if it's correct
 norw_dat = do.call(rbind, lapply(files, function(x) read.csv(paste(data_dir,x,sep=''), stringsAsFactors = FALSE, header = TRUE, sep = ";")))
+>>>>>>> 8672f586b165f1496162288aa8a5b49ce874a5bd
 rm(files)
 
 # change colnames from Norwegian to new names in English
