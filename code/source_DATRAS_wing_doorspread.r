@@ -276,21 +276,24 @@ pt <- survey %>%
   select(-TotalNo, -NoMeas, -CatCatchWgt, -LngtCode, -LngtClass, -HLNoAtLngt, -AphiaID) %>%
   distinct()
 
+pt[is.na(pt$WingSpread),]$WingSpread <- 15.1  # taken from Datras survey descriptions https://datras.ices.dk/Home/Descriptions.aspx#POR
+pt$DoorSpread <- 45.7                         # as above
+
 # no doorspread information
 
 # wingspread
-pt <- pt %>% 
-  mutate(WingSpread = replace(WingSpread, WingSpread>20, NA)) # remove at high end
+#pt <- pt %>% 
+#  mutate(WingSpread = replace(WingSpread, WingSpread>20, NA)) # remove at high end
 
-pt$cat <- "shallow"
-pt$cat[pt$Depth > 120] <- "deep" # seems to be a break-point when plotting (wingspread~depth)
+#pt$cat <- "shallow"
+#pt$cat[pt$Depth > 120] <- "deep" # seems to be a break-point when plotting (wingspread~depth)
 
-lm0 <- lm(WingSpread ~ Depth* cat , data=pt) 
-pred0 <- predict.lm (object=lm0, newdata=pt, interval='confidence', level=0.95)
-pt$wing_fit <- pred0[,1]
-pt[is.na(pt$WingSpread),]$WingSpread <- pt[is.na(pt$WingSpread),]$wing_fit
+#lm0 <- lm(WingSpread ~ Depth* cat , data=pt) 
+#pred0 <- predict.lm (object=lm0, newdata=pt, interval='confidence', level=0.95)
+#pt$wing_fit <- pred0[,1]
+#pt[is.na(pt$WingSpread),]$WingSpread <- pt[is.na(pt$WingSpread),]$wing_fit
 
-pt$DoorSpread <- pt$WingSpread / 0.3 # doorspread probably not needed, rough estimate
+#pt$DoorSpread <- pt$WingSpread / 0.3 # doorspread probably not needed, rough estimate
 
 # combine
 pt <- pt %>%

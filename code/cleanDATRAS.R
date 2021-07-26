@@ -329,7 +329,7 @@ list.taxa <- survey %>%
 
 # get LME
 library(rgdal)
-shape1 <- readOGR(dsn = "LME shapefile",layer="lme66")
+shape1 <- readOGR(dsn = "C:/Users/danie/Dropbox/Werk/Archief/2018 Nat Eco Evo/LME shapefile",layer="lme66")
 coords <- list.taxa %>%
   dplyr::select(ShootLat, ShootLong, Survey) %>%
   distinct()
@@ -645,7 +645,7 @@ ggplot(comp, aes(x=wtcpue, y=wgtlencpue)) + geom_point() +
               linetype="dashed", size=0.5) + scale_x_log10() + scale_y_log10()
 
 cor(x = xx$wtcpue , y = xx$wgtlencpue, method = 'pearson')
-# [1] 0.934661
+# [1] 0.9346
 
 ##########################################################################################
 #### SAVE DATA

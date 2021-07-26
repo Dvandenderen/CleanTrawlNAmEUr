@@ -174,7 +174,7 @@ norw_dat$WingSpread <- norw_dat$DoorSpread * 0.3
 # No document for conversion factors from L weight measurements!!!
 # No liters measurements after 2001, so ok if we only select from 2005
 # Two rows are in MeasureType or MeasureType==6, but in 1993 and 1995, so will be removed
-norw_dat[norw_dat$MeasureType==5,]$Weight <- norw_dat[norw_dat$MeasureType==5,]$Weight*1000
+norw_dat[norw_dat$MeasureType==5,]$Weight <- norw_dat[norw_dat$MeasureType==5,]$Weight*1 # changed from x 1000 correct??
 norw_dat[norw_dat$MeasureType==6,]$Weight <- norw_dat[norw_dat$MeasureType==6,]$Weight*1000*1000
 norw_dat[norw_dat$MeasureType==6,]$NoMeas <- norw_dat[norw_dat$MeasureType==6,]$NoMeas*1000
 norw_dat[norw_dat$MeasureType==7,]$Weight <- norw_dat[norw_dat$MeasureType==7,]$Weight*1000
@@ -437,7 +437,7 @@ norw_dat <- norw_dat %>%
   select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Area.doors, Gear,
          Depth, SBT, SST, Species, numcpue, wtcpue, numh, wgth, Length, numlencpue, numlenh)
 
-save(norw_dat, file='data/NORBTS22July2021.RData')
+save(norw_dat, file='data/NORBTS23July2021.RData')
 
 
 ##########################################################################################
