@@ -204,7 +204,6 @@ survey <- survey %>%
 
 source('code/source_DATRAS_wing_doorspread.R')
 
-
 ##########################################################################################
 #### GET CPUEs AND RIGHT COLUMNS NAMES
 ##########################################################################################
@@ -287,6 +286,7 @@ survey <- survey %>%
 survey$AphiaID <- NULL
 
 
+
 ### Code to integrate from Anna Rindorf on species bycatch corrections
 survey <- data.frame(survey)
 survey <- survey %>%
@@ -313,7 +313,6 @@ survey <- survey %>%
                           'Lesueurigobius'='Gobius','Gobius cobitis'='Gobius','Gobius niger'='Gobius',
                           'Leusueurigobius friesii'='Gobius','Neogobius melanostomus'='Gobius',
                           'Neogobius'='Gobius'))
-
 
 ##########################################################################################
 #### RE-CALCULATE WEIGHTS
@@ -398,7 +397,7 @@ list.taxa <- survey %>%
          Subspecies = str_split(Species, pattern = " ", simplify=T)[,3],
          Species = str_split(Species, pattern = " ", simplify=T)[,2],
          Species = if_else(Subspecies!="", paste(Species, Subspecies, sep=" "), Species))
-write.csv(data.frame(list.taxa), file="traits/taxa.DATRAS.FB.tofill5.csv", row.names=FALSE)
+#write.csv(data.frame(list.taxa), file="traits/taxa.DATRAS.FB.tofill5.csv", row.names=FALSE)
 #save(survey, file = "data/DATRAS_before_lw_xxxxx.RData") # could save intermediate stage
 
 

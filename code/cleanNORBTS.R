@@ -437,6 +437,32 @@ norw_dat <- norw_dat %>%
   select(Survey, HaulID, StatRec, Year, Month, Quarter, Season, ShootLat, ShootLong, HaulDur, Area.swept, Area.doors, Gear,
          Depth, SBT, SST, Species, numcpue, wtcpue, numh, wgth, Length, numlencpue, numlenh)
 
+# get "easy" length weight
+norw_dat$a <- 0.01
+norw_dat$b <- 3
+norw_dat$Length <- as.numeric(as.character(norw_dat$Length))
+
+norw_dat$wgtlenh <- norw_dat$a*norw_dat$Length^norw_dat$b*norw_dat$numlenh/1000
+norw_dat$wgtlencpue <- norw_dat$a*norw_dat$Length^norw_dat$b*norw_dat$numlencpue/1000
+
+# part of data is per species sub-group, part of data is per length-class
+subgroup <- norw_dat[,1:21]
+subgroup <- subgroup %>%
+  distinct() %>%
+  group_by(Survey,HaulID,StatRec, Year,Month,Quarter,Season, ShootLat,ShootLong,HaulDur,Area.swept,Area.doors,Gear,Depth,SBT,SST,Species)  %>% 
+summarize_at(.vars=c('numcpue', 'wtcpue', 'numh','wgth'), .funs = function(x) sum(x)) %>% 
+  as.data.frame()
+
+lengthcl <- norw_dat[,c(2,17,22:28)]
+lengthcl <- lengthcl %>%
+  distinct() %>%
+  group_by(HaulID,Species, a,b)  %>% 
+  summarize_at(.vars=c('numlencpue', 'wgtlencpue', 'numlenh','wgtlenh'), .funs = function(x) sum(x)) %>% 
+  as.data.frame()
+
+norw_dat <- left_join(subgroup, lengthcl, by=c('HaulID','Species'))
+
+
 save(norw_dat, file='data/NORBTS23July2021.RData')
 
 
